@@ -1,0 +1,37 @@
+[{
+  "type": "scene",
+  "id": "scene1",
+  "content": [{
+      "type": "image",
+      "id": "image1-1",
+      "url": "http://placehold.it/400x400",
+      "desktopTl": "1,1",
+      "desktopBr": "3,3",
+      "mobileTl": "1,1",
+      "mobileBr": "3,3"
+    },
+    {
+      "type": "image",
+      "id": "image1-1",
+      "url": "http://placehold.it/400x400",
+      "desktopTl": "4,4",
+      "desktopBr": "6,6",
+      "mobileTl": "4,4",
+      "mobileBr": "6,6"
+    }
+  ]
+},
+{
+  "type": "scene",
+  "id": "scene2",
+  "content": [{
+    "type": "image",
+    "id": "image2-1",
+    "url": "http://placehold.it/400x400",
+    "desktopTl": "3,3",
+    "desktopBr": "3,3",
+    "mobileTl": "3,3",
+    "mobileBr": "3,3"
+  }]
+}
+]
