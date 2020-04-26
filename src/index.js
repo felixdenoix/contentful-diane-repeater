@@ -1,14 +1,20 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import '@contentful/forma-36-react-components/dist/styles.css';
 
-import { Spinner } from '@contentful/forma-36-react-components';
+import {SortableContainer, SortableElement, SortableHandle} from 'react-sortable-hoc';
+import arrayMove from 'array-move';
+
+import { Spinner, TextInput } from '@contentful/forma-36-react-components';
 import { init } from 'contentful-ui-extensions-sdk';
+
 import UploadView from './components/UploadView';
 import ProgressView from './components/ProgressView';
 import FileView from './components/FileView';
+
 import {
+  randomId,
   readFileAsUrl,
   findImageContentType,
   getImageUrlFromDataTransfer,
@@ -24,8 +30,59 @@ class App extends React.Component {
   };
 
   state = {
-    isDraggingOver: false,
-    value: this.props.sdk.field.getValue(this.findProperLocale())
+    preventSorting: true,
+    value: this.props.sdk.field.getValue(this.findProperLocale()) || [],
+    scenes: [{
+      "type": "scene",
+      "id": "scene1",
+      "content": [{
+          "type": "image",
+          "id": "image1-1",
+          "asset": {
+            "id": "sdlfqiuhsdlfih",
+            "url": "http://placehold.it/400x400"
+          },
+          positions: {
+            "desktopTl": {x: "1", y: "1"},
+            "desktopBr": {x: "3", y: "3"},
+            "mobileTl": {x: "1", y: "1"},
+            "mobileBr": {x: "3", y: "3"}
+          }
+        },
+        {
+          "type": "image",
+          "id": "image1-2",
+          "asset": {
+            "id": "sdfsdfsdfsdfsdf",
+            "url": "http://placehold.it/400x400"
+          },
+          positions: {
+            "desktopTl": {x: "4", y: "4"},
+            "desktopBr": {x: "6", y: "6"},
+            "mobileTl": {x: "4", y: "4"},
+            "mobileBr": {x: "6", y: "6"}
+          }
+        }
+      ]
+    },
+    {
+      "type": "scene",
+      "id": "scene2",
+      "content": [{
+        "type": "image",
+        "id": "image2-1",
+        "asset": {
+          "id": "sdfdfghdrthhhju",
+          "url": "http://placehold.it/400x400"
+        },
+        positions: {
+          "desktopTl": {x: "3", y: "3"},
+          "desktopBr": {x: "3", y: "3"},
+          "mobileTl": {x: "3", y: "3"},
+          "mobileBr": {x: "3", y: "3"}
+        }
+      }]
+    }],
   };
 
   componentDidMount() {
@@ -33,165 +90,24 @@ class App extends React.Component {
 
     // Handler for external field value changes (e.g. when multiple authors are working on the same entry).
     this.detachExternalChangeHandler = this.props.sdk.field.onValueChanged(this.onExternalChange);
-
-    if (this.state.value) {
-      this.props.sdk.space
-        .getAsset(this.state.value.sys.id)
-        .then(asset => this.setState({ asset }))
-        .catch(() => this.unlinkAsset());
-    }
   }
 
   componentWillUnmount() {
     this.detachExternalChangeHandler();
   }
 
-  onDropFiles = event => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    this.setState({
-      imageUrl: undefined,
-      base64Prefix: undefined,
-      base64Data: undefined
-    });
-
-    // Read the file that was just selected
-    const files = Array.prototype.slice.call(event.target.files || event.dataTransfer.files);
-
-    if (files.length) {
-      return this.createNewAssetFromFiles(files);
-    }
-
-    if (!event.dataTransfer) {
-      return;
-    }
-
-    // Check if another asset was dragndropped.
-    const assetId = getAssetIdFromDataTransfer(event.dataTransfer);
-    if (assetId) {
-      return this.reuseExistingAsset(assetId);
-    }
-
-    // Check if an image with base64 type was dragndropped
-    const base64 = getBase64FromDataTransfer(event.dataTransfer);
-    if (base64) {
-      return this.createNewAssetFromBase64(base64.prefix, base64.data, {
-        name: 'Unnamed',
-        type: base64.type
-      });
-    }
-
-    // Check if an image element was dragndropped
-    const imageUrl = getImageUrlFromDataTransfer(event.dataTransfer);
-    if (imageUrl) {
-      return this.createNewAssetFromImageUrl(imageUrl);
-    }
-  };
-
-  onChange = event => {
-    const value = event.currentTarget.value;
-    this.setState({ value });
-
-    if (value) {
-      this.props.sdk.field.setValue(value);
-    } else {
-      this.props.sdk.field.removeValue();
-    }
-  };
-
-  onClickEdit = () => {
-    this.props.sdk.navigator.openAsset(this.state.asset.sys.id, {
-      slideIn: true
-    });
-  };
-
-  onClickLinkExisting = async () => {
-    const selectedAsset = await this.props.sdk.dialogs.selectSingleAsset({
-      locale: this.props.sdk.field.locale
-    });
-
-    try {
-      await this.setFieldLink(selectedAsset.sys.id);
-    } catch (err) {
-      this.onError(err);
-    }
-  };
-
-  onClickRemove = () => {
-    this.unlinkAsset();
-  };
-
-  onDragOverEnd = () => {
-    this.setState({ isDraggingOver: false });
-  };
-
-  onDragOverStart = () => {
-    this.setState({ isDraggingOver: true });
-  };
-
-  onError = error => {
-    this.props.sdk.notifier.error(error.message);
-  };
-
   onExternalChange = value => {
-    this.setState({ value });
+    console.log('🐯 onExternalCHneaferf')
+
+    this.setState({ value: value || [], scenes: value || [] });
   };
 
-  /*
-     Create a new (unprocessed) asset entry for given upload and file.
-     createAsset(upload: UploadEntity, file: File, locale: string): Promise<AssetEntity>
-  */
-  createAsset = (upload, file, locale) => {
-    const asset = {
-      fields: {
-        title: {},
-        description: {},
-        file: {}
-      }
-    };
-
-    asset.fields.title[locale] = file.name;
-    asset.fields.description[locale] = file.name;
-    asset.fields.file[locale] = {
-      contentType: file.type,
-      fileName: file.name,
-      uploadFrom: {
-        sys: {
-          type: 'Link',
-          linkType: 'Upload',
-          id: upload.sys.id
-        }
-      }
-    };
-
-    return this.props.sdk.space.createAsset(asset);
+  onSortEnd = ({oldIndex, newIndex}) => {
+    this.setState(({scenes}) => ({
+      scenes: arrayMove(scenes, oldIndex, newIndex),
+    }));
   };
 
-  createAssetWithImageUrl = (imageUrl, contentType, locale) => {
-    const asset = {
-      fields: {
-        title: {},
-        description: {},
-        file: {}
-      }
-    };
-
-    asset.fields.title[locale] = imageUrl;
-    asset.fields.description[locale] = imageUrl;
-    asset.fields.file[locale] = {
-      contentType,
-      fileName: imageUrl,
-      upload: imageUrl
-    };
-
-    return this.props.sdk.space.createAsset(asset);
-  };
-
-  /*
-    If customers prefers localization of references, always return default locale.
-    If not, return current locale.
-  */
   findProperLocale() {
     if (this.props.sdk.entry.fields[this.props.sdk.field.id].type === 'Link') {
       return this.props.sdk.locales.default;
@@ -200,224 +116,189 @@ class App extends React.Component {
     return this.props.sdk.field.locale;
   }
 
-  reuseExistingAsset = async assetId => {
-    let asset;
+  toggleSorting = () => {
+    this.setState(({preventSorting}) => ({
+      preventSorting: !preventSorting
+    }), ()=> console.log(this.state.preventSorting))
+  }
 
-    try {
-      asset = await this.props.sdk.space.getAsset(assetId);
-    } catch (err) {
-      this.onError(err);
-    }
+  setDistantFieldValue = () => {
+    this.props.sdk.field.setValue(this.state.scenes)
+  }
 
-    this.setState({
-      asset
-    });
+  addPage = () => {
+    this.setState(({scenes})=> ({
+      scenes: [...scenes, {
+        type: 'scene',
+        id: randomId(),
+        content: []
+      }]
+    }))
+  }
 
-    await this.props.sdk.field.setValue(
-      {
-        sys: {
-          type: 'Link',
-          linkType: 'Asset',
-          id: assetId
-        }
-      },
-      this.findProperLocale()
-    );
-  };
+  addSceneContent = (index) => {
 
-  createNewAssetFromFiles = async files => {
-    // Filter only images
-    const imageFiles = files.filter(file => /^image\/[\w-_|\w+\w]+$/.test(file.type));
-
-    // If no images were found, raise an error
-    if (imageFiles.length === 0) {
-      return this.onError(new Error('Only images are allowed'));
-    }
-
-    // Only one image at a time is supported. In the future, we can accept set of images per locale ?
-    if (imageFiles.length > 1) {
-      return this.onError(new Error('Please drop only one image at a time'));
-    }
-
-    const imageFile = imageFiles[0];
-
-    this.setState({ file: imageFile });
-    this.setUploadProgress(0);
-
-    // Encode the file as Base64, so we can pass it through SDK proxy to get it uploaded
-    const [base64Prefix, base64Data] = await readFileAsUrl(imageFile);
-    this.createNewAssetFromBase64(base64Prefix, base64Data, imageFile);
-  };
-
-  /* `createNewAssetFromFile(file?: File): void` takes base64 data
-     that contains the image and performs following tasks;
-
-     * Upload the image via SDK
-     * Create a raw asset object that links to the upload created
-     * Send a request to start processing the asset
-     * Wait until the asset is processed
-     * Publish the asset
-     */
-  createNewAssetFromBase64 = async (base64Prefix, base64Data, file) => {
-    this.setUploadProgress(10);
-    this.setState({ base64Prefix, base64Data });
-
-    // Upload the Base64 encoded image
-    const upload = await this.props.sdk.space.createUpload(base64Data);
-    this.setUploadProgress(40);
-
-    // Some customers use different locale model than others, so we need to figure out what works for them best
-    const locale = this.findProperLocale();
-
-    // Create an unprocessed asset record that links to the upload record created above
-    // It reads asset title and filenames from the HTML5 File object we're passing as second parameter
-    const rawAsset = await this.createAsset(upload, file, locale);
-    this.setUploadProgress(50);
-    this.processAndPublishAsset(rawAsset, locale);
-  };
-
-  createNewAssetFromImageUrl = async imageUrl => {
-    this.setUploadProgress(0);
-
-    this.setState({
-      imageUrl
-    });
-
-    // const contentType = await findImageContentType(imageUrl)
-    const locale = this.findProperLocale();
-    const rawAsset = await this.createAssetWithImageUrl(imageUrl, '', locale);
-
-    this.setUploadProgress(25);
-    this.processAndPublishAsset(rawAsset, locale);
-  };
-
-  /*
-    - Send a request to start processing the asset
-    - Wait until the asset is processed
-    - Publish the asset
-  */
-  processAndPublishAsset = async (rawAsset, locale) => {
-    // Send a request to start processing the asset. This will happen asynchronously.
-    await this.props.sdk.space.processAsset(rawAsset, locale);
-
-    this.setUploadProgress(55);
-
-    // Wait until asset is processed.
-    const processedAsset = await this.props.sdk.space.waitUntilAssetProcessed(
-      rawAsset.sys.id,
-      locale
-    );
-    this.setUploadProgress(85);
-
-    // Publish the asset, ignore if it fails
-    let publishedAsset;
-    try {
-      publishedAsset = await this.props.sdk.space.publishAsset(processedAsset);
-    } catch (err) {}
-
-    this.setUploadProgress(95);
-
-    const asset = publishedAsset || processedAsset;
-    this.setState({
-      asset
-    });
-
-    // Set the value of the reference field as a link to the asset created above
-    await this.props.sdk.field.setValue(
-      {
-        sys: {
-          type: 'Link',
-          linkType: 'Asset',
-          id: asset.sys.id
-        }
-      },
-      locale
-    );
-
-    this.setUploadProgress(100);
-  };
-
-  unlinkAsset = () => {
-    this.props.sdk.field.setValue(null, this.findProperLocale());
-    this.setState({
-      value: null,
-      asset: null
-    });
-  };
-
-  setFieldLink(assetId) {
-    return this.props.sdk.field
-      .setValue(
-        {
-          sys: {
-            type: 'Link',
-            linkType: 'Asset',
-            id: assetId
-          }
+    this.setState(({scenes}) => {
+      scenes[index].content.push({
+        "type": "image",
+        "id": `image-${randomId()}`,
+        "asset": {
+          "id": `asset-${randomId()}`,
+          "url": ""
         },
-        this.findProperLocale()
-      )
-      .then(() =>
-        this.props.sdk.space
-          .getAsset(this.state.value.sys.id)
-          .then(asset => this.setState({ asset }))
-      );
+        positions: {
+          "desktopTl": {x: "0", y: "0"},
+          "desktopBr": {x: "0", y: "0"},
+          "mobileTl": {x: "0", y: "0"},
+          "mobileBr": {x: "0", y: "0"}
+        }
+      })
+      return {scenes}
+    }, ()=> {console.log('🐯 this.state.scenes[index].content after ADDSCENECONTENT', this.state.scenes[index].content)})
+
+    console.log('🐯 scene to add content', index)
   }
 
-  setUploadProgress(percent) {
-    this.setState({
-      uploading: percent < 100,
-      uploadProgress: percent
-    });
+  updateImageElPosition = (pos, axis, itemIndex, imageIndex, e) => {
+    e.preventDefault();
+
+    const newVal = e.currentTarget.value
+
+    // if (newVal > 3) return
+
+    this.setState(({scenes}) => {
+      scenes[itemIndex].content[imageIndex].positions[pos][axis] = newVal
+      return {scenes}
+    }, () => {
+      console.log('🐯 updated', this.state.scenes[itemIndex].content[imageIndex].positions[pos])
+    })
+
   }
+
 
   render = () => {
-    if (this.state.uploading) {
-      return (
-        <ProgressView
-          imageUrl={this.state.imageUrl}
-          base64Prefix={this.state.base64Prefix}
-          base64Data={this.state.base64Data}
-          uploadProgress={this.state.uploadProgress}
-        />
-      );
-    } else if (!this.state.isDraggingOver && this.state.asset) {
-      // Display existing asset if user is not dragging over an image
-      return (
-        <FileView
-          file={this.state.asset.fields.file[this.findProperLocale()]}
-          isPublished={
-            this.state.asset.sys.version === (this.state.asset.sys.publishedVersion || 0) + 1
-          }
-          isDraggingOver={this.state.isDraggingOver}
-          onDrop={this.onDropFiles}
-          onDragOverStart={this.onDragOverStart}
-          onDragOverEnd={this.onDragOverEnd}
-          onClickEdit={this.onClickEdit}
-          onClickRemove={this.onClickRemove}
-        />
-      );
-    } else if (!this.state.isDraggingOver && this.state.value) {
-      // If `asset` is not set but `value` is, the entry was just opened
-      // and we're currently loading the asset value.
-      return (
-        <main className="spinner viewport centered">
-          <Spinner />
-        </main>
-      );
-    }
-
     return (
-      <UploadView
-        isDraggingOver={this.state.isDraggingOver}
-        onDrop={this.onDropFiles}
-        onDragOverStart={this.onDragOverStart}
-        onDragOverEnd={this.onDragOverEnd}
-        onClickLinkExisting={this.onClickLinkExisting}
-      />
+      <Fragment>
+        preventSorting: {this.state.preventSorting ? 'true': 'false'}
+        <pre>
+          {JSON.stringify(this.state.value, null, 2)}
+        </pre>
+
+        <SortableList
+          items={this.state.scenes}
+          addSceneContent={this.addSceneContent}
+          sortingPrevented={this.state.preventSorting}
+
+          updatePosition={this.updateImageElPosition}
+          onSortEnd={this.onSortEnd}
+          shouldCancelStart={()=>(this.state.preventSorting)}
+          useDragHandle={true}/>
+
+        <div className="control">
+          <button onClick={this.addPage}>Add page</button>
+
+          <button onClick={this.toggleSorting}>Sorting is: {this.state.preventSorting ? 'disabled': 'enabled'} </button>
+
+          <button onClick={this.setDistantFieldValue}>SetFieldValue</button>
+        </div>
+      </Fragment>
     );
   };
 }
+
+
+const SortableList = SortableContainer(({items, addSceneContent, sortingPrevented, updatePosition}) => {
+  return (
+    <div className='scene__list' style={{'border': '1px solid black'}}>
+
+      {items.map((value, index) => (
+        <div className="coucou" key={`item-${value.id}`}>
+          <SortableItem
+            key={`item-${value.id}`}
+            index={index}
+            itemIndex={index}
+            value={value}
+            addSceneContent={addSceneContent}
+            sortingPrevented={sortingPrevented}
+            updatePosition={updatePosition}/>
+          <button onClick={ (e) => { return addSceneContent(index, e) }}>Add content</button>
+        </div>
+
+      ))}
+    </div>
+  );
+});
+
+const DragHandle = SortableHandle(() => <span>::</span>);
+
+const SortableItem = SortableElement(({value, itemIndex, addSceneContent, sortingPrevented, updatePosition}) =>
+  <div className="scene__element" style={{'border': '1px solid red', display: 'flex', flexDirection: 'row',}}>
+    <DragHandle/>
+    <div className="content">
+      <div>id: {value.id} </div>
+      <div>itemIndex: {itemIndex}</div>
+      <span>{JSON.stringify(addSceneContent)}</span>
+      {
+          sortingPrevented ? (
+            <div>
+              <span>content:</span>
+              {
+                value.content.map((el, imageIndex)=>
+                  <ItemContent
+                    imageEl={el}
+                    key={el.id}
+                    itemIndex={itemIndex}
+                    imageIndex={imageIndex}
+                    updatePosition={updatePosition}/>
+                )
+              }
+            </div>
+          ) : <div>saaaalur</div>
+      }
+    </div>
+  </div>
+);
+
+const ItemContent = ({imageEl, updatePosition, itemIndex, imageIndex}) => (
+  <div className="element__content" style={{border: '1px solid green'}}>
+    {imageEl.id}
+    {imageEl.type}
+
+    <div className="image" style={{border: '1px solid purple'}}>
+      image handling :
+      {
+        (imageEl.asset.id && imageEl.asset.url) ? 'has image' : 'has no image'
+      }
+    </div>
+
+    <div className="positions">
+      {Object.keys(imageEl.positions).map(pos =>
+        <div key={pos} style={{display: 'flex', flexDirection: 'row'}}>
+          <p>position: {pos}</p>
+          <div>
+            x: <TextInput
+              type="text"
+              value={imageEl.positions[pos].x}
+              maxLength={3}
+              onChange={(e) => updatePosition(pos, 'x', itemIndex, imageIndex, e)}/>
+          </div>
+          <div className="">
+            y: <TextInput
+              type="text"
+              value={imageEl.positions[pos].y}
+              maxLength={3}
+              onChange={(e) => updatePosition(pos, 'y', itemIndex, imageIndex, e)}/>
+          </div>
+        </div>
+      )}
+    </div>
+
+  </div>
+);
+
+const ItemImage = ({url, onClickLinkExisting}) => (
+
+)
 
 
 init(sdk => {

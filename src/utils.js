@@ -74,3 +74,15 @@ export function isImageAsset(asset, locale) {
     /^image\//.test(asset.fields.file[locale].contentType)
   )
 }
+
+
+export function  randomId() {
+  const allowedChars = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9','0','-']
+  const max = allowedChars.length - 1
+  let randomId = '_';
+  for(let i=0; i < 9; i++) {
+    const index = Math.ceil(Math.random()*max)
+    randomId += allowedChars[Math.ceil(Math.random()*max)]
+  }
+  return randomId
+}

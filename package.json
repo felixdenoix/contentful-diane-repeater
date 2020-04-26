@@ -3,16 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "devDependencies": {
-    "@contentful/contentful-extension-scripts": "0.15.1",
-    "@contentful/eslint-config-extension": "0.3.1",
     "@babel/core": "7.3.4",
     "@babel/plugin-proposal-class-properties": "7.3.4",
     "@babel/plugin-transform-runtime": "7.3.4",
     "@babel/preset-env": "7.3.4",
     "@babel/preset-react": "7.0.0",
+    "@contentful/contentful-extension-scripts": "0.15.1",
+    "@contentful/eslint-config-extension": "0.3.1",
     "@testing-library/react": "8.0.4",
-    "cssnano": "4.1.10",
+    "babel-plugin-transform-class-properties": "^6.24.1",
     "contentful-cli": "0.33.2",
+    "cssnano": "4.1.10",
     "eslint": "^6.0.1"
   },
   "scripts": {
@@ -31,10 +32,12 @@
     "@contentful/forma-36-fcss": "^0.0.20",
     "@contentful/forma-36-react-components": "^3.11.3",
     "@contentful/forma-36-tokens": "^0.3.0",
+    "array-move": "^2.2.1",
     "contentful-ui-extensions-sdk": "3.9.0",
     "prop-types": "^15.7.2",
     "react": "^16.8.6",
-    "react-dom": "^16.8.6"
+    "react-dom": "^16.8.6",
+    "react-sortable-hoc": "^1.11.0"
   },
   "browserslist": [
     "last 5 Chrome version",
