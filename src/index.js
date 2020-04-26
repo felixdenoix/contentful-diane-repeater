@@ -24,6 +24,20 @@ import {
 
 import './index.css';
 
+
+const SortableList = SortableContainer( ({children}) =>
+    <div className='scene__list' style={{'border': '1px solid black'}}>
+      {children}
+    </div>);
+
+const DragHandle = SortableHandle(() => <span>::</span>);
+
+const SortableItem = SortableElement(({children}) =>
+  <div className="scene__element" style={{'border': '1px solid red', display: 'flex', flexDirection: 'row',}}>
+    {children}
+  </div>
+);
+
 class App extends React.Component {
   static propTypes = {
     sdk: PropTypes.object.isRequired
@@ -40,7 +54,7 @@ class App extends React.Component {
           "id": "image1-1",
           "asset": {
             "id": "sdlfqiuhsdlfih",
-            "url": "http://placehold.it/400x400"
+            "url": "https://placehold.it/400x400"
           },
           positions: {
             "desktopTl": {x: "1", y: "1"},
@@ -54,7 +68,7 @@ class App extends React.Component {
           "id": "image1-2",
           "asset": {
             "id": "sdfsdfsdfsdfsdf",
-            "url": "http://placehold.it/400x400"
+            "url": "https://placehold.it/400x400"
           },
           positions: {
             "desktopTl": {x: "4", y: "4"},
@@ -92,6 +106,10 @@ class App extends React.Component {
     this.detachExternalChangeHandler = this.props.sdk.field.onValueChanged(this.onExternalChange);
   }
 
+  componentDidUpdate() {
+    this.props.sdk.window.updateHeight()
+  }
+
   componentWillUnmount() {
     this.detachExternalChangeHandler();
   }
@@ -107,6 +125,33 @@ class App extends React.Component {
       scenes: arrayMove(scenes, oldIndex, newIndex),
     }));
   };
+
+  onClickLinkExisting = async (itemIndex, imageIndex) => {
+    const selectedAsset = await this.props.sdk.dialogs.selectSingleAsset({
+      locale: this.props.sdk.field.locale
+    });
+
+    try {
+      await this.setFieldLink(selectedAsset, itemIndex, imageIndex);
+    } catch (err) {
+      this.onError(err);
+    }
+  };
+
+  setFieldLink(asset, itemIndex, imageIndex) {
+
+    const url = asset.fields.file[this.findProperLocale()].url
+    this.setState(({scenes}) => {
+      scenes[itemIndex].content[imageIndex].asset = {
+        id: asset.sys.id,
+        url: url
+      }
+      return { scenes }
+    })
+
+    return this.setDistantFieldValue()
+
+  }
 
   findProperLocale() {
     if (this.props.sdk.entry.fields[this.props.sdk.field.id].type === 'Link') {
@@ -154,9 +199,10 @@ class App extends React.Component {
         }
       })
       return {scenes}
-    }, ()=> {console.log('🐯 this.state.scenes[index].content after ADDSCENECONTENT', this.state.scenes[index].content)})
+    }, () => {
+      console.log('🐯 after ADDSCENECONTENT', this.state.scenes[index].content)
+    })
 
-    console.log('🐯 scene to add content', index)
   }
 
   updateImageElPosition = (pos, axis, itemIndex, imageIndex, e) => {
@@ -176,23 +222,59 @@ class App extends React.Component {
   }
 
 
+
+
   render = () => {
     return (
       <Fragment>
         preventSorting: {this.state.preventSorting ? 'true': 'false'}
-        <pre>
-          {JSON.stringify(this.state.value, null, 2)}
-        </pre>
 
         <SortableList
-          items={this.state.scenes}
           addSceneContent={this.addSceneContent}
-          sortingPrevented={this.state.preventSorting}
 
           updatePosition={this.updateImageElPosition}
           onSortEnd={this.onSortEnd}
           shouldCancelStart={()=>(this.state.preventSorting)}
-          useDragHandle={true}/>
+          useDragHandle={true}>
+
+          {
+            this.state.scenes.map((value, index) => (
+              <div className="coucou" key={`item-${value.id}`}>
+                <SortableItem
+                  key={`item-${value.id}`}
+                  index={index}
+                  value={value}
+                  addSceneContent={this.addSceneContent}
+                  updatePosition={this.updatePosition}>
+
+                  <DragHandle/>
+                    <div className="content">
+                      <div>id: {value.id} </div>
+                      <div>itemIndex: {index}</div>
+                      { this.state.preventSorting && (
+                        <div>
+                          <span>content:</span>
+                          { value.content.map((el, imageIndex)=>
+                            <ItemContent
+                              imageEl={el}
+                              key={el.id}
+                              itemIndex={index}
+                              imageIndex={imageIndex}
+                              updatePosition={this.updatePosition}
+                              onClickLinkExisting={this.onClickLinkExisting}/>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                </SortableItem>
+
+                <button onClick={ (e) => this.addSceneContent(index, e) }>Add content</button>
+              </div>
+            ))
+          }
+
+        </SortableList>
 
         <div className="control">
           <button onClick={this.addPage}>Add page</button>
@@ -206,69 +288,20 @@ class App extends React.Component {
   };
 }
 
-
-const SortableList = SortableContainer(({items, addSceneContent, sortingPrevented, updatePosition}) => {
-  return (
-    <div className='scene__list' style={{'border': '1px solid black'}}>
-
-      {items.map((value, index) => (
-        <div className="coucou" key={`item-${value.id}`}>
-          <SortableItem
-            key={`item-${value.id}`}
-            index={index}
-            itemIndex={index}
-            value={value}
-            addSceneContent={addSceneContent}
-            sortingPrevented={sortingPrevented}
-            updatePosition={updatePosition}/>
-          <button onClick={ (e) => { return addSceneContent(index, e) }}>Add content</button>
-        </div>
-
-      ))}
-    </div>
-  );
-});
-
-const DragHandle = SortableHandle(() => <span>::</span>);
-
-const SortableItem = SortableElement(({value, itemIndex, addSceneContent, sortingPrevented, updatePosition}) =>
-  <div className="scene__element" style={{'border': '1px solid red', display: 'flex', flexDirection: 'row',}}>
-    <DragHandle/>
-    <div className="content">
-      <div>id: {value.id} </div>
-      <div>itemIndex: {itemIndex}</div>
-      <span>{JSON.stringify(addSceneContent)}</span>
-      {
-          sortingPrevented ? (
-            <div>
-              <span>content:</span>
-              {
-                value.content.map((el, imageIndex)=>
-                  <ItemContent
-                    imageEl={el}
-                    key={el.id}
-                    itemIndex={itemIndex}
-                    imageIndex={imageIndex}
-                    updatePosition={updatePosition}/>
-                )
-              }
-            </div>
-          ) : <div>saaaalur</div>
-      }
-    </div>
-  </div>
-);
-
-const ItemContent = ({imageEl, updatePosition, itemIndex, imageIndex}) => (
+const ItemContent = ({imageEl, updatePosition, itemIndex, imageIndex, onClickLinkExisting}) => (
   <div className="element__content" style={{border: '1px solid green'}}>
     {imageEl.id}
     {imageEl.type}
 
     <div className="image" style={{border: '1px solid purple'}}>
       image handling :
+      <pre>{JSON.stringify(imageEl, null, 2)}</pre>
       {
-        (imageEl.asset.id && imageEl.asset.url) ? 'has image' : 'has no image'
+        (imageEl.asset.id && imageEl.asset.url) && <img src={imageEl.asset.url} alt=""/>
       }
+      <div className="actions">
+        <button onClick={(e) => onClickLinkExisting(itemIndex, imageIndex, e)}>link existing</button>
+      </div>
     </div>
 
     <div className="positions">
@@ -296,9 +329,6 @@ const ItemContent = ({imageEl, updatePosition, itemIndex, imageIndex}) => (
   </div>
 );
 
-const ItemImage = ({url, onClickLinkExisting}) => (
-
-)
 
 
 init(sdk => {

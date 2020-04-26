@@ -382,7 +382,7 @@ class App extends React.Component {
     const previousValue = this.state.value || []
     const assetId = asset.sys.id
     const fileUrl = asset.fields.file[this.findProperLocale()].url
-    debugger
+
     return this.props.sdk.field
       .setValue(
         [
