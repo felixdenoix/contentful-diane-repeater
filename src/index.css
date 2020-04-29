@@ -8,3 +8,76 @@ div {
   font: inherit;
   vertical-align: baseline;
 }
+.base {
+  position: relative;
+}
+
+.scene__list {
+}
+
+.scene__element {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 5px;
+  border: 1px solid #9E9E9E;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.scene__element .page {
+  position: relative;
+  width: 100%;
+  padding: 10px;
+}
+.scene__element .delete {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+.scene__handle {
+  text-align: center;
+  background-color: lightgray;
+  width: 20px;
+  padding: 5px;
+  cursor: grab;
+
+  border-right: 1px solid gray;
+
+  align-self: normal;
+  transition: all .75s ease;
+
+  display: flex;
+  align-items: center;
+}
+
+.scene__handle span {
+  width: 100%;
+  text-align: center;
+}
+
+.scene__handle.disabled {
+  opacity: .2;
+  cursor: default;
+}
+
+.add--image {
+  margin-top: 10px;
+}
+
+button.hide {
+  opacity: .4;
+}
+
+button.hide:hover {
+  opacity: 1;
+}
+
+.control {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  margin: 10px  0 5px;
+}

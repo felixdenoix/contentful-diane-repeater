@@ -6,12 +6,13 @@ import '@contentful/forma-36-react-components/dist/styles.css';
 import {SortableContainer, SortableElement, SortableHandle} from 'react-sortable-hoc';
 import arrayMove from 'array-move';
 
-import { Spinner, TextInput } from '@contentful/forma-36-react-components';
+import { TextInput, Button } from '@contentful/forma-36-react-components';
 import { init } from 'contentful-ui-extensions-sdk';
 
-import UploadView from './components/UploadView';
-import ProgressView from './components/ProgressView';
-import FileView from './components/FileView';
+import ItemContent from './components/ItemContent'
+// import UploadView from './components/UploadView';
+// import ProgressView from './components/ProgressView';
+// import FileView from './components/FileView';
 
 import {
   randomId,
@@ -26,14 +27,14 @@ import './index.css';
 
 
 const SortableList = SortableContainer( ({children}) =>
-    <div className='scene__list' style={{'border': '1px solid black'}}>
+    <div className='scene__list'>
       {children}
     </div>);
 
-const DragHandle = SortableHandle(() => <span>::</span>);
+const DragHandle = SortableHandle(({dragDisabled}) => <div className={`scene__handle ${dragDisabled && 'disabled'}`}><span>::</span></div>);
 
 const SortableItem = SortableElement(({children}) =>
-  <div className="scene__element" style={{'border': '1px solid red', display: 'flex', flexDirection: 'row',}}>
+  <div className="scene__element">
     {children}
   </div>
 );
@@ -46,57 +47,29 @@ class App extends React.Component {
   state = {
     preventSorting: true,
     value: this.props.sdk.field.getValue(this.findProperLocale()) || [],
-    scenes: [{
-      "type": "scene",
-      "id": "scene1",
-      "content": [{
-          "type": "image",
-          "id": "image1-1",
-          "asset": {
-            "id": "sdlfqiuhsdlfih",
-            "url": "https://placehold.it/400x400"
-          },
-          positions: {
-            "desktopTl": {x: "1", y: "1"},
-            "desktopBr": {x: "3", y: "3"},
-            "mobileTl": {x: "1", y: "1"},
-            "mobileBr": {x: "3", y: "3"}
-          }
-        },
-        {
-          "type": "image",
-          "id": "image1-2",
-          "asset": {
-            "id": "sdfsdfsdfsdfsdf",
-            "url": "https://placehold.it/400x400"
-          },
-          positions: {
-            "desktopTl": {x: "4", y: "4"},
-            "desktopBr": {x: "6", y: "6"},
-            "mobileTl": {x: "4", y: "4"},
-            "mobileBr": {x: "6", y: "6"}
-          }
-        }
-      ]
-    },
-    {
-      "type": "scene",
-      "id": "scene2",
-      "content": [{
-        "type": "image",
-        "id": "image2-1",
-        "asset": {
-          "id": "sdfdfghdrthhhju",
-          "url": "http://placehold.it/400x400"
-        },
-        positions: {
-          "desktopTl": {x: "3", y: "3"},
-          "desktopBr": {x: "3", y: "3"},
-          "mobileTl": {x: "3", y: "3"},
-          "mobileBr": {x: "3", y: "3"}
-        }
-      }]
-    }],
+    scenes: [
+      // {
+      //   "type": "scene",
+      //   "id": "scene1",
+      //   "content": [
+      //       {
+      //         "type": "image",
+      //         "id": "image1-2",
+      //         "asset": {
+      //           "title": "image_de_gaston_HONHONHON.png"
+      //           "id": "sdfsdfsdfsdfsdf",
+      //           "url": "https://placehold.it/400x400"
+      //         },
+      //         grid: {
+      //           "desktopTl": {x: "4", y: "4"},
+      //           "desktopBr": {x: "6", y: "6"},
+      //           "mobileTl": {x: "4", y: "4"},
+      //           "mobileBr": {x: "6", y: "6"}
+      //         }
+      //       }
+      //     ]
+      // }
+    ],
   };
 
   componentDidMount() {
@@ -138,18 +111,25 @@ class App extends React.Component {
     }
   };
 
-  setFieldLink(asset, itemIndex, imageIndex) {
+  onClickResize = () => {
+    this.props.sdk.window.updateHeight()
+  }
 
+  async setFieldLink(asset, itemIndex, imageIndex) {
+
+    const title = asset.fields.title[this.findProperLocale()]
     const url = asset.fields.file[this.findProperLocale()].url
+
     this.setState(({scenes}) => {
       scenes[itemIndex].content[imageIndex].asset = {
         id: asset.sys.id,
+        title: title,
         url: url
       }
       return { scenes }
     })
 
-    return this.setDistantFieldValue()
+    await this.setDistantFieldValue()
 
   }
 
@@ -168,35 +148,63 @@ class App extends React.Component {
   }
 
   setDistantFieldValue = () => {
-    this.props.sdk.field.setValue(this.state.scenes)
+    const stateHasChanged = JSON.stringify(this.state.value) !== JSON.stringify(this.state.scenes) // THIS IS ABSOLUTELY DISGUSTING, I KNOW.
+    console.log('🐯 stateHasChanged', stateHasChanged)
+    return stateHasChanged && this.props.sdk.field.setValue(this.state.scenes)
   }
 
-  addPage = () => {
+  addScene = () => {
     this.setState(({scenes})=> ({
       scenes: [...scenes, {
         type: 'scene',
         id: randomId(),
-        content: []
+        title: '',
+        content: [],
       }]
     }))
+  }
+
+  deleteScene = (index) => {
+
+    this.setState(({scenes}) => {
+      scenes.splice(index, 1)
+      return {scenes}
+    })
+
+  }
+
+  removeSceneContent = (sceneIndex, contentIndex) => {
+
+    this.setState(({scenes}) => {
+      scenes[sceneIndex].content.splice(contentIndex, 1)
+      return {scenes}
+    })
+
   }
 
   addSceneContent = (index) => {
 
     this.setState(({scenes}) => {
       scenes[index].content.push({
-        "type": "image",
-        "id": `image-${randomId()}`,
-        "asset": {
-          "id": `asset-${randomId()}`,
-          "url": ""
+        type: "image",
+        id: `image-${randomId()}`,
+        asset: {
+          id: `asset-${randomId()}`,
+          url: ""
         },
-        positions: {
-          "desktopTl": {x: "0", y: "0"},
-          "desktopBr": {x: "0", y: "0"},
-          "mobileTl": {x: "0", y: "0"},
-          "mobileBr": {x: "0", y: "0"}
-        }
+        grid: {
+          desktopTl: {x: "0", y: "0"},
+          desktopBr: {x: "0", y: "0"},
+          mobileTl: {x: "0", y: "0"},
+          mobileBr: {x: "0", y: "0"}
+        },
+        margins: {
+          mTop: false,
+          mLeft: false,
+          mBottom: false,
+          mRight: false
+        },
+        fullBleed: false
       })
       return {scenes}
     }, () => {
@@ -205,134 +213,148 @@ class App extends React.Component {
 
   }
 
-  updateImageElPosition = (pos, axis, itemIndex, imageIndex, e) => {
-    e.preventDefault();
-
+  updateSceneTitle= (sceneIndex, e) => {
     const newVal = e.currentTarget.value
 
-    // if (newVal > 3) return
+    this.setState(({scenes}) => {
+      scenes[sceneIndex].title = newVal
+      return {scenes}
+    })
+  }
+
+  updateImageElGrid = (pos, axis, itemIndex, imageIndex, e) => {
+    const newVal = e.currentTarget.value
 
     this.setState(({scenes}) => {
-      scenes[itemIndex].content[imageIndex].positions[pos][axis] = newVal
+      scenes[itemIndex].content[imageIndex].grid[pos][axis] = newVal
       return {scenes}
     }, () => {
-      console.log('🐯 updated', this.state.scenes[itemIndex].content[imageIndex].positions[pos])
+      console.log('🐯 grid updateed', this.state.scenes[itemIndex].content[imageIndex].grid[pos])
     })
 
   }
 
+  updateImageElMargin = (pos, itemIndex, imageIndex, e) => {
+    const newVal = e.target.checked
+    console.log('🐯 c', this.state.scenes[itemIndex].content[imageIndex].margins)
 
+    this.setState(({scenes})=> {
+      scenes[itemIndex].content[imageIndex].margins[pos] = newVal
+      return {scenes}
+    }, () => {
+      console.log('🐯 this.state.scenes[itemIndex].content[imageIndex].margins[pos]', this.state.scenes[itemIndex].content[imageIndex].margins)
+    })
 
+  }
+
+  updateImageElFullBleed = (itemIndex, imageIndex, e) => {
+    const newVal = e.currentTarget.checked
+
+    this.setState(({scenes})=> {
+      scenes[itemIndex].content[imageIndex].fullBleed = newVal
+      return {scenes}
+    })
+  }
 
   render = () => {
     return (
       <Fragment>
-        preventSorting: {this.state.preventSorting ? 'true': 'false'}
 
         <SortableList
           addSceneContent={this.addSceneContent}
 
-          updatePosition={this.updateImageElPosition}
           onSortEnd={this.onSortEnd}
           shouldCancelStart={()=>(this.state.preventSorting)}
           useDragHandle={true}>
 
-          {
-            this.state.scenes.map((value, index) => (
-              <div className="coucou" key={`item-${value.id}`}>
-                <SortableItem
-                  key={`item-${value.id}`}
-                  index={index}
-                  value={value}
-                  addSceneContent={this.addSceneContent}
-                  updatePosition={this.updatePosition}>
+          {this.state.scenes.map((scene, index) =>
+              <SortableItem
+                key={`item-${scene.id}`}
+                index={index}
+                value={scene}
+                addSceneContent={this.addSceneContent}>
 
-                  <DragHandle/>
-                    <div className="content">
-                      <div>id: {value.id} </div>
-                      <div>itemIndex: {index}</div>
-                      { this.state.preventSorting && (
-                        <div>
-                          <span>content:</span>
-                          { value.content.map((el, imageIndex)=>
-                            <ItemContent
-                              imageEl={el}
-                              key={el.id}
-                              itemIndex={index}
-                              imageIndex={imageIndex}
-                              updatePosition={this.updatePosition}
-                              onClickLinkExisting={this.onClickLinkExisting}/>
-                          )}
-                        </div>
-                      )}
+                <DragHandle dragDisabled={this.state.preventSorting}/>
+
+                <div className="page">
+                  <div className="">
+                    <div>id: {scene.id} </div>
+                    <div>
+                      <h3>
+                        Title
+                      </h3>
+                      {
+                        this.state.preventSorting
+                        ? (
+                          <TextInput
+                            type="text"
+                            value={scene.title}
+                            onChange={(e) => this.updateSceneTitle(index, e)}
+                            onBlur={() => this.setDistantFieldValue()}/>
+                        )
+                        : <h3>{scene.title}</h3>
+                      }
                     </div>
+                    { this.state.preventSorting && (
+                      <div>
+                        <h3>content:</h3>
+                        { scene.content.map((el, imageIndex)=>
+                          <ItemContent
+                            imageEl={el}
+                            key={el.id}
+                            itemIndex={index}
+                            imageIndex={imageIndex}
+                            updateGrid={this.updateImageElGrid}
+                            updateMargin={this.updateImageElMargin}
+                            updateFullBleed={this.updateImageElFullBleed}
+                            onClickLinkExisting={this.onClickLinkExisting}
+                            deleteImage={this.removeSceneContent}
+                            setDistantFieldValue={this.setDistantFieldValue}
+                            sdk={this.props.sdk}/>
+                        )}
+                      </div>
+                    )}
+                    {this.state.preventSorting && (
+                      <Button
+                        className="add--image"
+                        buttonType="muted"
+                        size="small"
+                        icon="Asset"
+                        onClick={ (e) => this.addSceneContent(index, e) }>
+                        Add image
+                      </Button>
+                    )}
+                  </div>
+                  <div className="delete">
+                    <Button buttonType="negative" className="hide" icon="Warning" size="small" onClick={ () => this.deleteScene(index)}>delete scene</Button>
+                  </div>
+                </div>
 
-                </SortableItem>
 
-                <button onClick={ (e) => this.addSceneContent(index, e) }>Add content</button>
-              </div>
-            ))
+              </SortableItem>
+            )
           }
 
         </SortableList>
 
         <div className="control">
-          <button onClick={this.addPage}>Add page</button>
 
-          <button onClick={this.toggleSorting}>Sorting is: {this.state.preventSorting ? 'disabled': 'enabled'} </button>
+          <Button buttonType="muted" onClick={this.addScene}>Add scene 📸</Button>
 
-          <button onClick={this.setDistantFieldValue}>SetFieldValue</button>
+          <Button buttonType="muted" onClick={this.toggleSorting}>Sorting is: {this.state.preventSorting ? 'disabled ❌': 'enabled 👍'} </Button>
+
+          <Button buttonType="positive" onClick={this.setDistantFieldValue}>💾 SAVE 💾</Button>
+
         </div>
       </Fragment>
     );
   };
 }
 
-const ItemContent = ({imageEl, updatePosition, itemIndex, imageIndex, onClickLinkExisting}) => (
-  <div className="element__content" style={{border: '1px solid green'}}>
-    {imageEl.id}
-    {imageEl.type}
-
-    <div className="image" style={{border: '1px solid purple'}}>
-      image handling :
-      <pre>{JSON.stringify(imageEl, null, 2)}</pre>
-      {
-        (imageEl.asset.id && imageEl.asset.url) && <img src={imageEl.asset.url} alt=""/>
-      }
-      <div className="actions">
-        <button onClick={(e) => onClickLinkExisting(itemIndex, imageIndex, e)}>link existing</button>
-      </div>
-    </div>
-
-    <div className="positions">
-      {Object.keys(imageEl.positions).map(pos =>
-        <div key={pos} style={{display: 'flex', flexDirection: 'row'}}>
-          <p>position: {pos}</p>
-          <div>
-            x: <TextInput
-              type="text"
-              value={imageEl.positions[pos].x}
-              maxLength={3}
-              onChange={(e) => updatePosition(pos, 'x', itemIndex, imageIndex, e)}/>
-          </div>
-          <div className="">
-            y: <TextInput
-              type="text"
-              value={imageEl.positions[pos].y}
-              maxLength={3}
-              onChange={(e) => updatePosition(pos, 'y', itemIndex, imageIndex, e)}/>
-          </div>
-        </div>
-      )}
-    </div>
-
-  </div>
-);
-
 
 
 init(sdk => {
-  ReactDOM.render(<App sdk={sdk} />, document.getElementById('root'));
+  ReactDOM.render(<App sdk={sdk} className="base" />, document.getElementById('root'));
 });
 
 /**
