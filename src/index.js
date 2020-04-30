@@ -67,8 +67,12 @@ class App extends React.Component {
   }
 
   onExternalChange = value => {
-    this.setState({ scenes: [...value] || [] });
+    this.setState({ scenes: this.isIterable(value) ? [...value] : [] });
   };
+
+  isIterable = object => {
+    return object !== null && typeof object[Symbol.iterator] === 'function'
+  }
 
   onSortEnd = ({oldIndex, newIndex}) => {
     this.setState(({scenes}) => ({
