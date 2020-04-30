@@ -1,3 +1,7 @@
+.element__content {
+  max-width: 100%;
+}
+
 .element__content .image {
   display: flex;
   flex-direction: row;
@@ -20,17 +24,25 @@
   text-align: center;
 }
 
-.element__content img {
-  max-height: 200px;
+.element__content .image {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.positions {
+.element__content img {
+  max-height: 200px;
 }
 
 .position__line {
   display: flex;
   flex-direction: row;
   margin-bottom: 10px;
+  align-items: center;
+}
+
+.position__line .image__actions {
+  margin-left: 10px;
 }
 
 .position__line p {
@@ -48,4 +60,9 @@
 
 .position__line .position__wrapper span {
   padding-right: 5px;
+}
+
+.position__line form {
+  display: flex;
+  flex-direction: row;
 }

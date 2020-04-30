@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import '@contentful/forma-36-react-components/dist/styles.css';
@@ -8,19 +8,13 @@ import arrayMove from 'array-move';
 
 import { TextInput, Button } from '@contentful/forma-36-react-components';
 import { init } from 'contentful-ui-extensions-sdk';
-
 import ItemContent from './components/ItemContent'
-// import UploadView from './components/UploadView';
-// import ProgressView from './components/ProgressView';
-// import FileView from './components/FileView';
+import ErrorBoundary from './components/ErrorBoundary'
+
+import scenesSchema from './model'
 
 import {
   randomId,
-  readFileAsUrl,
-  findImageContentType,
-  getImageUrlFromDataTransfer,
-  getAssetIdFromDataTransfer,
-  getBase64FromDataTransfer
 } from './utils';
 
 import './index.css';
@@ -44,33 +38,18 @@ class App extends React.Component {
     sdk: PropTypes.object.isRequired
   };
 
-  state = {
-    preventSorting: true,
-    value: this.props.sdk.field.getValue(this.findProperLocale()) || [],
-    scenes: [
-      // {
-      //   "type": "scene",
-      //   "id": "scene1",
-      //   "content": [
-      //       {
-      //         "type": "image",
-      //         "id": "image1-2",
-      //         "asset": {
-      //           "title": "image_de_gaston_HONHONHON.png"
-      //           "id": "sdfsdfsdfsdfsdf",
-      //           "url": "https://placehold.it/400x400"
-      //         },
-      //         grid: {
-      //           "desktopTl": {x: "4", y: "4"},
-      //           "desktopBr": {x: "6", y: "6"},
-      //           "mobileTl": {x: "4", y: "4"},
-      //           "mobileBr": {x: "6", y: "6"}
-      //         }
-      //       }
-      //     ]
-      // }
-    ],
-  };
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      preventSorting: true,
+      value: this.props.sdk.field.getValue(this.findProperLocale()) || [],
+      debug: false,
+      scenes: this.props.sdk.field.getValue(this.findProperLocale()) || [],
+    }
+
+    this.scenesRef = React.createRef();
+  }
 
   componentDidMount() {
     this.props.sdk.window.startAutoResizer();
@@ -88,9 +67,7 @@ class App extends React.Component {
   }
 
   onExternalChange = value => {
-    console.log('🐯 onExternalCHneaferf')
-
-    this.setState({ value: value || [], scenes: value || [] });
+    this.setState({ scenes: [...value] || [] });
   };
 
   onSortEnd = ({oldIndex, newIndex}) => {
@@ -118,19 +95,21 @@ class App extends React.Component {
   async setFieldLink(asset, itemIndex, imageIndex) {
 
     const title = asset.fields.title[this.findProperLocale()]
-    const url = asset.fields.file[this.findProperLocale()].url
+    const {url, contentType} = asset.fields.file[this.findProperLocale()]
 
     this.setState(({scenes}) => {
       scenes[itemIndex].content[imageIndex].asset = {
         id: asset.sys.id,
         title: title,
-        url: url
+        url: url,
+        contentType: contentType
       }
       return { scenes }
+    }, async () => {
+
+      await this.setDistantFieldValue()
+
     })
-
-    await this.setDistantFieldValue()
-
   }
 
   findProperLocale() {
@@ -144,13 +123,19 @@ class App extends React.Component {
   toggleSorting = () => {
     this.setState(({preventSorting}) => ({
       preventSorting: !preventSorting
-    }), ()=> console.log(this.state.preventSorting))
+    }))
   }
 
   setDistantFieldValue = () => {
     const stateHasChanged = JSON.stringify(this.state.value) !== JSON.stringify(this.state.scenes) // THIS IS ABSOLUTELY DISGUSTING, I KNOW.
     console.log('🐯 stateHasChanged', stateHasChanged)
-    return stateHasChanged && this.props.sdk.field.setValue(this.state.scenes)
+    return this.props.sdk.field.setValue(this.state.scenes).then((data)=> {
+      this.setState({scenes: [...data], value: [...data]})
+    })
+  }
+
+  setDebug = () => {
+    this.setState(({debug}) => ({debug: !debug}))
   }
 
   addScene = () => {
@@ -190,7 +175,9 @@ class App extends React.Component {
         id: `image-${randomId()}`,
         asset: {
           id: `asset-${randomId()}`,
-          url: ""
+          url: "",
+          title: "",
+          contentType: ""
         },
         grid: {
           desktopTl: {x: "0", y: "0"},
@@ -204,13 +191,20 @@ class App extends React.Component {
           mBottom: false,
           mRight: false
         },
-        fullBleed: false
+        fullBleed: false,
+        anchor: 'none',
+        objectFit: 'none'
       })
       return {scenes}
     }, () => {
       console.log('🐯 after ADDSCENECONTENT', this.state.scenes[index].content)
     })
 
+  }
+
+  udpateDebugInput = (e) => {
+    const newVal = e.target.value
+    this.setState({debugInput: newVal})
   }
 
   updateSceneTitle= (sceneIndex, e) => {
@@ -229,20 +223,18 @@ class App extends React.Component {
       scenes[itemIndex].content[imageIndex].grid[pos][axis] = newVal
       return {scenes}
     }, () => {
-      console.log('🐯 grid updateed', this.state.scenes[itemIndex].content[imageIndex].grid[pos])
+      console.log('🐯 grid updateed STATE', this.state.scenes[itemIndex].content[imageIndex].grid[pos])
+      console.log('🐯 grid updateed VALUE', this.state.value[itemIndex].content[imageIndex].grid[pos])
     })
 
   }
 
   updateImageElMargin = (pos, itemIndex, imageIndex, e) => {
     const newVal = e.target.checked
-    console.log('🐯 c', this.state.scenes[itemIndex].content[imageIndex].margins)
 
     this.setState(({scenes})=> {
       scenes[itemIndex].content[imageIndex].margins[pos] = newVal
       return {scenes}
-    }, () => {
-      console.log('🐯 this.state.scenes[itemIndex].content[imageIndex].margins[pos]', this.state.scenes[itemIndex].content[imageIndex].margins)
     })
 
   }
@@ -256,18 +248,96 @@ class App extends React.Component {
     })
   }
 
+  updateImageElAnchor = (itemIndex, imageIndex, e) => {
+    const newVal = e.currentTarget.value
+
+    this.setState(({scenes}) => {
+      scenes[itemIndex].content[imageIndex].anchor = newVal
+      return {scenes}
+    })
+  }
+
+  updateImageElObjectFit = (itemIndex, imageIndex, e) => {
+    const newVal = e.currentTarget.value
+
+
+    this.setState(({scenes}) => {
+      scenes[itemIndex].content[imageIndex].objectFit = newVal
+      return {scenes}
+    })
+  }
+
+  setScenesFromDebugInput = () => {
+    try {
+
+      const newVal = JSON.parse(this.state.debugInput)
+      const {error, value} = scenesSchema.validate(newVal)
+
+      if (error) {
+        console.log('🐯 error validating debug input object', error)
+        return
+      } else {
+        this.setState({scenes: [...value]})
+      }
+
+    } catch (err) {
+
+      console.log('🐯 error parsing debug input', err)
+
+    }
+  }
+
+  copyScenes = () => {
+    this.scenesRef.current.select();
+    document.execCommand("copy");
+  }
+
   render = () => {
     return (
-      <Fragment>
+      <div className="base">
 
-        <SortableList
-          addSceneContent={this.addSceneContent}
+        <div className="control">
 
-          onSortEnd={this.onSortEnd}
-          shouldCancelStart={()=>(this.state.preventSorting)}
-          useDragHandle={true}>
+          <Button buttonType="muted" onClick={this.setDebug}>Debug <span role="img">🐱</span></Button>
 
-          {this.state.scenes.map((scene, index) =>
+          <Button buttonType="muted" onClick={this.addScene}>Add scene <span role="img">📸</span></Button>
+
+          <Button buttonType="muted" onClick={this.toggleSorting}>Sorting is: {this.state.preventSorting ? 'disabled ❌': 'enabled 👍'} </Button>
+
+          <Button buttonType="positive" onClick={this.setDistantFieldValue}><span role="img">💾</span> SAVE <span role="img">💾</span></Button>
+
+        </div>
+
+        {this.state.debug && <div className="debug">
+
+          <div className="debug__scenes">
+            <Button id="copy" icon="Copy" size="small" buttonType="muted" onClick={this.copyScenes}>copy</Button>
+            <textarea ref={this.scenesRef} value={JSON.stringify(this.state.scenes, null, 2)} readOnly/>
+          </div>
+
+          <div className="debug__input">
+            <div className="">
+              update field
+            </div>
+            <div className="">
+              <textarea value={this.state.debugInput} onChange={this.udpateDebugInput} />
+            </div>
+            <div className="">
+              <Button id="fix" buttonType="muted" size="small" onClick={this.setScenesFromDebugInput}>set scenes state</Button>
+            </div>
+          </div>
+
+        </div>}
+
+        <ErrorBoundary>
+
+          <SortableList
+            addSceneContent={this.addSceneContent}
+            onSortEnd={this.onSortEnd}
+            shouldCancelStart={()=>(this.state.preventSorting)}
+            useDragHandle={true}>
+
+            {this.state.scenes.length > 0 && this.state.scenes.map((scene, index) =>
               <SortableItem
                 key={`item-${scene.id}`}
                 index={index}
@@ -283,22 +353,19 @@ class App extends React.Component {
                       <h3>
                         Title
                       </h3>
-                      {
-                        this.state.preventSorting
-                        ? (
-                          <TextInput
+                      { this.state.preventSorting
+                        ? (<TextInput
                             type="text"
                             value={scene.title}
                             onChange={(e) => this.updateSceneTitle(index, e)}
-                            onBlur={() => this.setDistantFieldValue()}/>
-                        )
+                            />)
                         : <h3>{scene.title}</h3>
                       }
                     </div>
                     { this.state.preventSorting && (
                       <div>
                         <h3>content:</h3>
-                        { scene.content.map((el, imageIndex)=>
+                        { scene.content.length > 0 && scene.content.map((el, imageIndex)=>
                           <ItemContent
                             imageEl={el}
                             key={el.id}
@@ -307,6 +374,8 @@ class App extends React.Component {
                             updateGrid={this.updateImageElGrid}
                             updateMargin={this.updateImageElMargin}
                             updateFullBleed={this.updateImageElFullBleed}
+                            updateAnchor={this.updateImageElAnchor}
+                            updateObjectFit={this.updateImageElObjectFit}
                             onClickLinkExisting={this.onClickLinkExisting}
                             deleteImage={this.removeSceneContent}
                             setDistantFieldValue={this.setDistantFieldValue}
@@ -314,39 +383,43 @@ class App extends React.Component {
                         )}
                       </div>
                     )}
-                    {this.state.preventSorting && (
-                      <Button
-                        className="add--image"
-                        buttonType="muted"
-                        size="small"
-                        icon="Asset"
-                        onClick={ (e) => this.addSceneContent(index, e) }>
-                        Add image
-                      </Button>
-                    )}
+
+                    {this.state.preventSorting && (<Button
+                      className="add--image"
+                      buttonType="muted"
+                      size="small"
+                      icon="Asset"
+                      onClick={ (e) => this.addSceneContent(index, e) }>
+                      Add image
+                    </Button>)}
+
                   </div>
                   <div className="delete">
                     <Button buttonType="negative" className="hide" icon="Warning" size="small" onClick={ () => this.deleteScene(index)}>delete scene</Button>
                   </div>
                 </div>
 
+              </SortableItem>)}
 
-              </SortableItem>
-            )
-          }
+          </SortableList>
 
-        </SortableList>
+        </ErrorBoundary>
 
-        <div className="control">
+        {
+          this.state.scenes.length > 0 && <div className="control">
 
-          <Button buttonType="muted" onClick={this.addScene}>Add scene 📸</Button>
+            <Button buttonType="muted" onClick={this.setDebug}>Debug <span role="img">🐱</span></Button>
 
-          <Button buttonType="muted" onClick={this.toggleSorting}>Sorting is: {this.state.preventSorting ? 'disabled ❌': 'enabled 👍'} </Button>
+            <Button buttonType="muted" onClick={this.addScene}>Add scene <span role="img">📸</span></Button>
 
-          <Button buttonType="positive" onClick={this.setDistantFieldValue}>💾 SAVE 💾</Button>
+            <Button buttonType="muted" onClick={this.toggleSorting}>Sorting is: {this.state.preventSorting ? 'disabled ❌': 'enabled 👍'} </Button>
 
-        </div>
-      </Fragment>
+            <Button buttonType="positive" onClick={this.setDistantFieldValue}><span role="img">💾</span> SAVE <span role="img">💾</span></Button>
+
+          </div>
+        }
+
+      </div>
     );
   };
 }
@@ -354,7 +427,7 @@ class App extends React.Component {
 
 
 init(sdk => {
-  ReactDOM.render(<App sdk={sdk} className="base" />, document.getElementById('root'));
+  ReactDOM.render(<App sdk={sdk} />, document.getElementById('root'));
 });
 
 /**

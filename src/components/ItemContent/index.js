@@ -5,14 +5,34 @@ import { TextInput, Button } from '@contentful/forma-36-react-components';
 
 import './itemcontent.css'
 
-export default function ItemContent({imageEl, updateGrid, updateMargin, updateFullBleed, itemIndex, imageIndex, onClickLinkExisting, deleteImage, setDistantFieldValue, sdk}) {
+export default function ItemContent({imageEl, updateGrid, updateMargin, updateFullBleed, updateAnchor, updateObjectFit, itemIndex, imageIndex, onClickLinkExisting, deleteImage, setDistantFieldValue, sdk}) {
+
+  let asset;
+
+  if (imageEl.asset.id && imageEl.asset.url) {
+    if (imageEl.asset.contentType && imageEl.asset.contentType.includes('video')) {
+
+      asset = (<video width="320" height="240" controls>
+        <source src={'https:' + imageEl.asset.url} type={imageEl.asset.contentType} />
+        </video>)
+
+    } else {
+
+      asset = <img src={imageEl.asset.url} alt="" onLoad={()=>sdk.window.updateHeight()}/>
+
+    }
+  }
+
+  const anchorValues = ['top', 'left', 'bottom', 'right', 'center', 'none']
+
+  const objectFitValues = ['contain', 'cover', 'none']
 
   return (
     <div className="element__content">
       <div className="title">
-        <h4>
+        <h3>
           {imageEl.id}
-        </h4>
+        </h3>
         <Button
           className="hide"
           buttonType="negative"
@@ -23,14 +43,15 @@ export default function ItemContent({imageEl, updateGrid, updateMargin, updateFu
         </Button>
       </div>
 
-      <div className="image" >
-        <div className="image__wrapper">
-          {
-            (imageEl.asset.id && imageEl.asset.url) && <img src={imageEl.asset.url} alt="" onLoad={()=>sdk.window.updateHeight()}/>
-          }
-        </div>
-        <div className="image__actions">
-          <Button buttonType="muted" size="small" icon="Asset" onClick={(e) => onClickLinkExisting(itemIndex, imageIndex, e)}>link existing image</Button>
+      <div className="image">
+        <h4>Image</h4> <br/>
+        <div className="position__line">
+          <div className="image__wrapper">
+            {asset}
+          </div>
+          <div className="image__actions">
+            <Button buttonType="muted" size="small" icon="Asset" onClick={(e) => onClickLinkExisting(itemIndex, imageIndex, e)}>link existing image</Button>
+          </div>
         </div>
       </div>
 
@@ -56,6 +77,7 @@ export default function ItemContent({imageEl, updateGrid, updateMargin, updateFu
           </div>
         )}
         <div className="position__line">
+          <p>margin</p>
           <div className="position__wrapper">
             <label htmlFor="fullBleed">FullBleed</label>
             <input
@@ -77,6 +99,43 @@ export default function ItemContent({imageEl, updateGrid, updateMargin, updateFu
             </div>
           )}
         </div>
+        <div className="position__line">
+          <p>anchor</p>
+          <form>
+            {anchorValues.map((anchor) =>
+              <div className="position__wrapper" key={anchor}>
+                <label htmlFor={anchor + '-an-' + imageIndex}>{anchor}</label>
+                <input
+                  type="radio"
+                  name={anchor}
+                  id={anchor + '-an-' + imageEl.id}
+                  value={anchor}
+                  checked={imageEl.anchor === anchor}
+                  onChange={e => updateAnchor(itemIndex, imageIndex, e)}
+                  />
+              </div>
+            )}
+          </form>
+        </div>
+        <div className="position__line">
+        <p>objectFit</p>
+        <form>
+          {objectFitValues.map((objectFit) =>
+            <div className="position__wrapper" key={objectFit}>
+              <label htmlFor={objectFit + '-of-' + imageIndex}>{objectFit}</label>
+              {'none'==='none'}
+              <input
+                type="radio"
+                name={objectFit}
+                id={objectFit + '-of-' + imageEl.id}
+                value={objectFit}
+                checked={imageEl.objectFit === objectFit}
+                onChange={e => updateObjectFit(itemIndex, imageIndex, e)}
+                />
+            </div>
+          )}
+        </form>
+      </div>
       </div>
 
     </div>
@@ -88,6 +147,8 @@ ItemContent.propTypes = {
   updateGrid: PropTypes.func,
   updateMargin: PropTypes.func,
   updateFullBleed: PropTypes.func,
+  updateAnchor: PropTypes.func,
+  updateObjectFit: PropTypes.func,
   itemIndex: PropTypes.number,
   imageIndex: PropTypes.number,
   onClickLinkExisting: PropTypes.func,
