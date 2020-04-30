@@ -71,7 +71,7 @@ class App extends React.Component {
   };
 
   isIterable = object => {
-    return object !== null && typeof object[Symbol.iterator] === 'function'
+    return !!object && typeof object[Symbol.iterator] === 'function'
   }
 
   onSortEnd = ({oldIndex, newIndex}) => {
