@@ -1,8 +1,0 @@
-{
-  "id": "diane-repeater",
-  "name": "diane-repeater",
-  "srcdoc": "./build/index.html",
-  "fieldTypes": [
-    "Object"
-  ]
-}
