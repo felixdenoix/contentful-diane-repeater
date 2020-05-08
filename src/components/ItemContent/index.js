@@ -1,11 +1,25 @@
-import React from 'react'
+import React, { Fragment } from 'react'
 import PropTypes from 'prop-types'
 
 import { TextInput, Button } from '@contentful/forma-36-react-components';
 
 import './itemcontent.css'
 
-export default function ItemContent({imageEl, updateGrid, updateMargin, updateFullBleed, updateAnchor, updateObjectFit, itemIndex, imageIndex, onClickLinkExisting, deleteImage, setDistantFieldValue, sdk}) {
+export default function ItemContent({
+  imageEl,
+  updateGrid,
+  updateMargin,
+  updateFullBleed,
+  updateZIndex,
+  updateAnchor,
+  updateObjectFit,
+  updateStampEffect,
+  itemIndex,
+  imageIndex,
+  onClickLinkExisting,
+  deleteImage,
+  sdk
+}) {
 
   let asset;
 
@@ -56,8 +70,10 @@ export default function ItemContent({imageEl, updateGrid, updateMargin, updateFu
       </div>
 
       <div className="positions">
-        <h4>Positions</h4>
-        {imageEl.grid && Object.keys(imageEl.grid).map(pos =>
+        <h4>Display</h4>
+        {
+          // imageEl.grid && Object.keys(imageEl.grid).map(pos =>
+          imageEl.grid && ['desktopTl', 'desktopBr', 'mobileTl', 'mobileBr'].map(pos =>
           <div className="position__line" key={pos}>
             <p>{pos}</p>
             <div className="position__wrapper">
@@ -76,6 +92,18 @@ export default function ItemContent({imageEl, updateGrid, updateMargin, updateFu
             </div>
           </div>
         )}
+        <hr/>
+        <div className="position__line">
+          <p>zIndex</p>
+          <div className="position__wrapper">
+            <TextInput
+              type="number"
+              value={imageEl.zIndex || "0"}
+              maxLength={1}
+              onChange={(e) => updateZIndex(itemIndex, imageIndex, e)}/>
+          </div>
+        </div>
+        <hr/>
         <div className="position__line">
           <p>margin</p>
           <div className="position__wrapper">
@@ -99,6 +127,7 @@ export default function ItemContent({imageEl, updateGrid, updateMargin, updateFu
             </div>
           )}
         </div>
+        <hr/>
         <div className="position__line">
           <p>anchor</p>
           <form>
@@ -117,25 +146,49 @@ export default function ItemContent({imageEl, updateGrid, updateMargin, updateFu
             )}
           </form>
         </div>
+        <hr/>
         <div className="position__line">
-        <p>objectFit</p>
-        <form>
-          {objectFitValues.map((objectFit) =>
-            <div className="position__wrapper" key={objectFit}>
-              <label htmlFor={objectFit + '-of-' + imageIndex}>{objectFit}</label>
-              {'none'==='none'}
-              <input
-                type="radio"
-                name={objectFit}
-                id={objectFit + '-of-' + imageEl.id}
-                value={objectFit}
-                checked={imageEl.objectFit === objectFit}
-                onChange={e => updateObjectFit(itemIndex, imageIndex, e)}
-                />
+          <p>objectFit</p>
+          <form>
+            {objectFitValues.map((objectFit) =>
+              <div className="position__wrapper" key={objectFit}>
+                <label htmlFor={objectFit + '-of-' + imageIndex}>{objectFit}</label>
+                <input
+                  type="radio"
+                  name={objectFit}
+                  id={objectFit + '-of-' + imageEl.id}
+                  value={objectFit}
+                  checked={imageEl.objectFit === objectFit}
+                  onChange={e => updateObjectFit(itemIndex, imageIndex, e)}
+                  />
+              </div>
+            )}
+          </form>
+        </div>
+
+        {
+          (imageEl.asset.contentType && imageEl.asset.contentType.includes('image')) &&
+          <Fragment>
+            <hr/>
+            <div className="position__line">
+              <p>Animation</p>
+              <form>
+                <div className="position__wrapper">
+                  <label htmlFor="stamp_effect">stampEffect</label>
+                  <input
+                    type="checkbox"
+                    name="stamp_effect"
+                    id="stamp_effect"
+                    checked={imageEl.stampEffect}
+                    onChange={e=> updateStampEffect(itemIndex, imageIndex, e)}
+                    />
+                </div>
+              </form>
             </div>
-          )}
-        </form>
-      </div>
+          </Fragment>
+        }
+
+
       </div>
 
     </div>
@@ -147,11 +200,13 @@ ItemContent.propTypes = {
   updateGrid: PropTypes.func,
   updateMargin: PropTypes.func,
   updateFullBleed: PropTypes.func,
+  updateZIndex: PropTypes.func,
   updateAnchor: PropTypes.func,
   updateObjectFit: PropTypes.func,
+  updateStampEffect: PropTypes.func,
   itemIndex: PropTypes.number,
   imageIndex: PropTypes.number,
   onClickLinkExisting: PropTypes.func,
-  setDistantFieldValue: PropTypes.func,
   deleteImage: PropTypes.func,
+  sdk: PropTypes.object
 }

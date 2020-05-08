@@ -39,6 +39,8 @@ export default Joi.array().items(Joi.object().keys({
     }).required(),
     fullBleed: Joi.boolean().required(),
     anchor: Joi.string().required(),
-    objectFit: Joi.string().required()
+    objectFit: Joi.string().required(),
+    zIndex: Joi.string().required(),
+    stampEffect: Joi.boolean().required()
   }))
 }))

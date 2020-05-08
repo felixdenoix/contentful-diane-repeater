@@ -132,9 +132,7 @@ class App extends React.Component {
       locale: this.props.sdk.field.locale
     });
 
-
     try {
-      console.log('🐯ON CLICK EXISTING selectedAsset', selectedAsset)
       await this.setFieldLink(selectedAsset);
     } catch (err) {
       this.onError(err);

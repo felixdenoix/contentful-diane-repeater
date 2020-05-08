@@ -135,6 +135,7 @@ class App extends React.Component {
     console.log('🐯 stateHasChanged', stateHasChanged)
     return this.props.sdk.field.setValue(this.state.scenes).then((data)=> {
       this.setState({scenes: [...data], value: [...data]})
+      console.log('🚀 REMOTE UPDATED')
     })
   }
 
@@ -174,6 +175,7 @@ class App extends React.Component {
   addSceneContent = (index) => {
 
     this.setState(({scenes}) => {
+
       scenes[index].content.push({
         type: "image",
         id: `image-${randomId()}`,
@@ -195,13 +197,19 @@ class App extends React.Component {
           mBottom: false,
           mRight: false
         },
+        zIndex: 0,
         fullBleed: false,
         anchor: 'none',
-        objectFit: 'none'
+        objectFit: 'none',
+        stampEffect: false
       })
+
       return {scenes}
+
     }, () => {
+
       console.log('🐯 after ADDSCENECONTENT', this.state.scenes[index].content)
+
     })
 
   }
@@ -252,6 +260,24 @@ class App extends React.Component {
     })
   }
 
+  updateImageElStampEffect = (itemIndex, imageIndex, e) => {
+    const newVal = e.currentTarget.checked
+
+    this.setState(({scenes}) => {
+      scenes[itemIndex].content[imageIndex].stampEffect = newVal
+      return {scenes}
+    })
+  }
+
+  updateImageElZIndex = (itemIndex, imageIndex, e) => {
+    const newVal = e.currentTarget.value
+
+    this.setState(({scenes})=> {
+      scenes[itemIndex].content[imageIndex].zIndex = newVal
+      return {scenes}
+    })
+  }
+
   updateImageElAnchor = (itemIndex, imageIndex, e) => {
     const newVal = e.currentTarget.value
 
@@ -271,6 +297,7 @@ class App extends React.Component {
     })
   }
 
+
   setScenesFromDebugInput = () => {
     try {
 
@@ -278,10 +305,19 @@ class App extends React.Component {
       const {error, value} = scenesSchema.validate(newVal)
 
       if (error) {
+
         console.log('🐯 error validating debug input object', error)
         return
+
       } else {
-        this.setState({scenes: [...value]})
+
+        this.setState({scenes: [...value], debugInput: ''}, async () => {
+          await this.setDistantFieldValue()
+          .then(() => {
+            console.log('🐯 sucessfully set scenes manually')
+          })
+        })
+
       }
 
     } catch (err) {
@@ -354,9 +390,9 @@ class App extends React.Component {
                   <div className="">
                     <div>id: {scene.id} </div>
                     <div>
-                      <h3>
+                      <h2>
                         Title
-                      </h3>
+                      </h2>
                       { this.state.preventSorting
                         ? (<TextInput
                             type="text"
@@ -368,7 +404,7 @@ class App extends React.Component {
                     </div>
                     { this.state.preventSorting && (
                       <div>
-                        <h3>content:</h3>
+                        <h2>content:</h2>
                         { scene.content.length > 0 && scene.content.map((el, imageIndex)=>
                           <ItemContent
                             imageEl={el}
@@ -378,8 +414,10 @@ class App extends React.Component {
                             updateGrid={this.updateImageElGrid}
                             updateMargin={this.updateImageElMargin}
                             updateFullBleed={this.updateImageElFullBleed}
+                            updateZIndex={this.updateImageElZIndex}
                             updateAnchor={this.updateImageElAnchor}
                             updateObjectFit={this.updateImageElObjectFit}
+                            updateStampEffect={this.updateImageElStampEffect}
                             onClickLinkExisting={this.onClickLinkExisting}
                             deleteImage={this.removeSceneContent}
                             setDistantFieldValue={this.setDistantFieldValue}

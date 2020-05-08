@@ -2,7 +2,10 @@
   "name": "diane-repeater",
   "version": "0.1.0",
   "private": true,
-  "keywords": ["contentful", "repeater"],
+  "keywords": [
+    "contentful",
+    "repeater"
+  ],
   "devDependencies": {
     "@babel/core": "7.3.4",
     "@babel/plugin-proposal-class-properties": "7.3.4",
@@ -49,7 +52,7 @@
   "description": "Custom ui extension for contentful. To be used on json field",
   "license": "BEER-WARE LICENSE",
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/felixdenoix/contentful-diane-repeater"
+    "type": "git",
+    "url": "https://github.com/felixdenoix/contentful-diane-repeater"
   }
 }
