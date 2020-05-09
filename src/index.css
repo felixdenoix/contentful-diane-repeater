@@ -50,6 +50,33 @@ div {
   font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo,monospace;
 }
 
+.Collapsible__trigger {
+  cursor: pointer;
+  display: block;
+  width: calc(100% - 10px);
+  position: relative;
+  padding: 5px;
+  border: 1px solid #d3dce0;
+}
+
+.Collapsible__trigger:hover {
+  background-color: #d3dce0;
+}
+
+.Collapsible__trigger::after {
+  padding-left: 10px;
+  position: absolute;
+  right: 10px;
+}
+
+.collapsible-t::after {
+  content: '►';
+}
+
+.collapsible-t__opened::after {
+  content: '▼';
+}
+
 .scene__element {
   display: flex;
   flex-direction: row;

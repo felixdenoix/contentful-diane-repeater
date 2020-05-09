@@ -9,10 +9,13 @@ export default function ItemContent({
   imageEl,
   updateGrid,
   updateMargin,
+  updateMarginMobile,
   updateFullBleed,
   updateZIndex,
   updateAnchor,
+  updateAnchorMobile,
   updateObjectFit,
+  updateObjectFitMobile,
   updateStampEffect,
   itemIndex,
   imageIndex,
@@ -105,7 +108,7 @@ export default function ItemContent({
         </div>
         <hr/>
         <div className="position__line">
-          <p>margin</p>
+          <p>Affichage</p>
           <div className="position__wrapper">
             <label htmlFor="fullBleed">FullBleed</label>
             <input
@@ -115,57 +118,7 @@ export default function ItemContent({
               checked={imageEl.fullBleed}
               onChange={e=> updateFullBleed(itemIndex, imageIndex, e)}/>
           </div>
-          { imageEl.margins && Object.keys(imageEl.margins).map(marginPos =>
-            <div className="position__wrapper" key={marginPos}>
-              <label htmlFor={marginPos}>{marginPos}</label>
-              <input
-                type="checkbox"
-                name={marginPos}
-                checked={imageEl.margins[marginPos]}
-                onChange={(e) => updateMargin(marginPos, itemIndex, imageIndex, e)}
-                id={marginPos}/>
-            </div>
-          )}
         </div>
-        <hr/>
-        <div className="position__line">
-          <p>anchor</p>
-          <form>
-            {anchorValues.map((anchor) =>
-              <div className="position__wrapper" key={anchor}>
-                <label htmlFor={anchor + '-an-' + imageIndex}>{anchor}</label>
-                <input
-                  type="radio"
-                  name={anchor}
-                  id={anchor + '-an-' + imageEl.id}
-                  value={anchor}
-                  checked={imageEl.anchor === anchor}
-                  onChange={e => updateAnchor(itemIndex, imageIndex, e)}
-                  />
-              </div>
-            )}
-          </form>
-        </div>
-        <hr/>
-        <div className="position__line">
-          <p>objectFit</p>
-          <form>
-            {objectFitValues.map((objectFit) =>
-              <div className="position__wrapper" key={objectFit}>
-                <label htmlFor={objectFit + '-of-' + imageIndex}>{objectFit}</label>
-                <input
-                  type="radio"
-                  name={objectFit}
-                  id={objectFit + '-of-' + imageEl.id}
-                  value={objectFit}
-                  checked={imageEl.objectFit === objectFit}
-                  onChange={e => updateObjectFit(itemIndex, imageIndex, e)}
-                  />
-              </div>
-            )}
-          </form>
-        </div>
-
         {
           (imageEl.asset.contentType && imageEl.asset.contentType.includes('image')) &&
           <Fragment>
@@ -187,7 +140,112 @@ export default function ItemContent({
             </div>
           </Fragment>
         }
+        <hr/>
 
+        <h5>Desktop</h5>
+        <div className="position__line">
+          <p>margin</p>
+          { imageEl.margins && Object.keys(imageEl.margins).map(marginPos =>
+            <div className="position__wrapper" key={marginPos}>
+              <label htmlFor={marginPos}>{marginPos}</label>
+              <input
+                type="checkbox"
+                name={marginPos}
+                checked={imageEl.margins[marginPos]}
+                onChange={(e) => updateMargin(marginPos, itemIndex, imageIndex, e)}
+                id={marginPos}/>
+            </div>
+          )}
+        </div>
+        <div className="position__line">
+          <p>anchor</p>
+          <form>
+            {anchorValues.map((anchor) =>
+              <div className="position__wrapper" key={anchor}>
+                <label htmlFor={anchor + '-an-' + imageIndex}>{anchor}</label>
+                <input
+                  type="radio"
+                  name={anchor}
+                  id={anchor + '-an-' + imageEl.id}
+                  value={anchor}
+                  checked={imageEl.anchor === anchor}
+                  onChange={e => updateAnchor(itemIndex, imageIndex, e)}
+                  />
+              </div>
+            )}
+          </form>
+        </div>
+        <div className="position__line">
+          <p>objectFit</p>
+          <form>
+            {objectFitValues.map((objectFit) =>
+              <div className="position__wrapper" key={objectFit}>
+                <label htmlFor={objectFit + '-of-' + imageIndex}>{objectFit}</label>
+                <input
+                  type="radio"
+                  name={objectFit}
+                  id={objectFit + '-of-' + imageEl.id}
+                  value={objectFit}
+                  checked={imageEl.objectFit === objectFit}
+                  onChange={e => updateObjectFit(itemIndex, imageIndex, e)}
+                  />
+              </div>
+            )}
+          </form>
+        </div>
+        <hr/>
+
+        <h5>Mobile</h5>
+        <div className="position__line">
+          <p>margin</p>
+          { imageEl.margins && Object.keys(imageEl.margins).map(marginPos =>
+            <div className="position__wrapper" key={marginPos}>
+              <label htmlFor={marginPos}>{marginPos}</label>
+              <input
+                type="checkbox"
+                name={marginPos}
+                checked={imageEl.marginsMobile && imageEl.marginsMobile[marginPos]}
+                onChange={(e) => updateMarginMobile(marginPos, itemIndex, imageIndex, e)}
+                id={marginPos}/>
+            </div>
+          )}
+        </div>
+        <div className="position__line">
+          <p>anchor</p>
+          <form>
+            {anchorValues.map((anchor) =>
+              <div className="position__wrapper" key={anchor}>
+                <label htmlFor={anchor + '-anm-' + imageIndex}>{anchor}</label>
+                <input
+                  type="radio"
+                  name={anchor}
+                  id={anchor + '-anm-' + imageEl.id}
+                  value={anchor}
+                  checked={imageEl.anchorMobile === anchor}
+                  onChange={e => updateAnchorMobile(itemIndex, imageIndex, e)}
+                  />
+              </div>
+            )}
+          </form>
+        </div>
+        <div className="position__line">
+          <p>objectFit</p>
+          <form>
+            {objectFitValues.map((objectFit) =>
+              <div className="position__wrapper" key={objectFit}>
+                <label htmlFor={objectFit + '-ofm-' + imageIndex}>{objectFit}</label>
+                <input
+                  type="radio"
+                  name={objectFit}
+                  id={objectFit + '-ofm-' + imageEl.id}
+                  value={objectFit}
+                  checked={imageEl.objectFitMobile === objectFit}
+                  onChange={e => updateObjectFitMobile(itemIndex, imageIndex, e)}
+                  />
+              </div>
+            )}
+          </form>
+        </div>
 
       </div>
 
@@ -199,10 +257,13 @@ ItemContent.propTypes = {
   imageEl: PropTypes.object,
   updateGrid: PropTypes.func,
   updateMargin: PropTypes.func,
+  updateMarginMobile: PropTypes.func,
   updateFullBleed: PropTypes.func,
   updateZIndex: PropTypes.func,
   updateAnchor: PropTypes.func,
+  updateAnchorMobile: PropTypes.func,
   updateObjectFit: PropTypes.func,
+  updateObjectFitMobile: PropTypes.func,
   updateStampEffect: PropTypes.func,
   itemIndex: PropTypes.number,
   imageIndex: PropTypes.number,

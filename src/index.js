@@ -18,6 +18,7 @@ import {
 } from './utils';
 
 import './index.css';
+import Collapsible from 'react-collapsible';
 
 
 const SortableList = SortableContainer( ({children}) =>
@@ -41,11 +42,14 @@ class App extends React.Component {
   constructor(props) {
     super(props)
 
+    const fieldValue = this.props.sdk.field.getValue(this.findProperLocale()) || []
+    const fixedValue = this.fixScenes(fieldValue)
+
     this.state = {
       preventSorting: true,
-      value: this.props.sdk.field.getValue(this.findProperLocale()) || [],
+      value: fixedValue,
       debug: false,
-      scenes: this.props.sdk.field.getValue(this.findProperLocale()) || [],
+      scenes: fixedValue,
     }
 
     this.scenesRef = React.createRef();
@@ -145,12 +149,7 @@ class App extends React.Component {
 
   addScene = () => {
     this.setState(({scenes})=> ({
-      scenes: [...scenes, {
-        type: 'scene',
-        id: randomId(),
-        title: '',
-        content: [],
-      }]
+      scenes: [...scenes, baseScene()]
     }))
   }
 
@@ -176,33 +175,9 @@ class App extends React.Component {
 
     this.setState(({scenes}) => {
 
-      scenes[index].content.push({
-        type: "image",
-        id: `image-${randomId()}`,
-        asset: {
-          id: `asset-${randomId()}`,
-          url: "",
-          title: "",
-          contentType: ""
-        },
-        grid: {
-          desktopTl: {x: "0", y: "0"},
-          desktopBr: {x: "0", y: "0"},
-          mobileTl: {x: "0", y: "0"},
-          mobileBr: {x: "0", y: "0"}
-        },
-        margins: {
-          mTop: false,
-          mLeft: false,
-          mBottom: false,
-          mRight: false
-        },
-        zIndex: 0,
-        fullBleed: false,
-        anchor: 'none',
-        objectFit: 'none',
-        stampEffect: false
-      })
+      const newSceneContent = baseSceneItem()
+
+      scenes[index].content.push(newSceneContent)
 
       return {scenes}
 
@@ -238,7 +213,6 @@ class App extends React.Component {
       console.log('🐯 grid updateed STATE', this.state.scenes[itemIndex].content[imageIndex].grid[pos])
       console.log('🐯 grid updateed VALUE', this.state.value[itemIndex].content[imageIndex].grid[pos])
     })
-
   }
 
   updateImageElMargin = (pos, itemIndex, imageIndex, e) => {
@@ -248,7 +222,15 @@ class App extends React.Component {
       scenes[itemIndex].content[imageIndex].margins[pos] = newVal
       return {scenes}
     })
+  }
 
+  updateImageElMarginMobile = (pos, itemIndex, imageIndex, e) => {
+    const newVal = e.target.checked
+
+    this.setState(({scenes})=> {
+      scenes[itemIndex].content[imageIndex].marginsMobile[pos] = newVal
+      return {scenes}
+    })
   }
 
   updateImageElFullBleed = (itemIndex, imageIndex, e) => {
@@ -287,9 +269,17 @@ class App extends React.Component {
     })
   }
 
-  updateImageElObjectFit = (itemIndex, imageIndex, e) => {
+  updateImageElMobileAnchor = (itemIndex, imageIndex, e) => {
     const newVal = e.currentTarget.value
 
+    this.setState(({scenes}) => {
+      scenes[itemIndex].content[imageIndex].anchorMobile = newVal
+      return {scenes}
+    })
+  }
+
+  updateImageElObjectFit = (itemIndex, imageIndex, e) => {
+    const newVal = e.currentTarget.value
 
     this.setState(({scenes}) => {
       scenes[itemIndex].content[imageIndex].objectFit = newVal
@@ -297,16 +287,52 @@ class App extends React.Component {
     })
   }
 
+  updateImageElObjectFitMobile = (itemIndex, imageIndex, e) => {
+    const newVal = e.currentTarget.value
+
+    this.setState(({scenes}) => {
+      scenes[itemIndex].content[imageIndex].objectFitMobile = newVal
+      return {scenes}
+    })
+  }
+
+  fixScenes = (scenes) => {
+
+    return scenes.reduce((scenes, scene) => {
+
+      const newScene = {...baseScene(), ...scene}
+
+      const newSceneContent = scene.content.map(el => {
+        return {...baseSceneItem(), ...el}
+      })
+
+      newScene.content = newSceneContent
+
+      scenes.push(newScene)
+
+      return scenes
+
+    }, [])
+
+  }
 
   setScenesFromDebugInput = () => {
     try {
 
-      const newVal = JSON.parse(this.state.debugInput)
-      const {error, value} = scenesSchema.validate(newVal)
+      const value = JSON.parse(this.state.debugInput)
+      const error = null
+
+      // const newVal = JSON.parse(this.state.debugInput)
+
+      // // add fields that might be missing from input with default values
+      // const fixedNewVal = this.fixScenes(newVal)
+
+      // const {error, value} = scenesSchema.validate(fixedNewVal)
 
       if (error) {
 
         console.log('🐯 error validating debug input object', error)
+        console.log('🐯 value', value)
         return
 
       } else {
@@ -391,7 +417,7 @@ class App extends React.Component {
                     <div>id: {scene.id} </div>
                     <div>
                       <h2>
-                        Title
+                        titre:
                       </h2>
                       { this.state.preventSorting
                         ? (<TextInput
@@ -404,24 +430,34 @@ class App extends React.Component {
                     </div>
                     { this.state.preventSorting && (
                       <div>
-                        <h2>content:</h2>
+                        <h2>contenu:</h2>
                         { scene.content.length > 0 && scene.content.map((el, imageIndex)=>
-                          <ItemContent
-                            imageEl={el}
+                          <Collapsible
                             key={el.id}
-                            itemIndex={index}
-                            imageIndex={imageIndex}
-                            updateGrid={this.updateImageElGrid}
-                            updateMargin={this.updateImageElMargin}
-                            updateFullBleed={this.updateImageElFullBleed}
-                            updateZIndex={this.updateImageElZIndex}
-                            updateAnchor={this.updateImageElAnchor}
-                            updateObjectFit={this.updateImageElObjectFit}
-                            updateStampEffect={this.updateImageElStampEffect}
-                            onClickLinkExisting={this.onClickLinkExisting}
-                            deleteImage={this.removeSceneContent}
-                            setDistantFieldValue={this.setDistantFieldValue}
-                            sdk={this.props.sdk}/>
+                            trigger={el.asset.title || el.id}
+                            triggerClassName="collapsible-t"
+                            triggerOpenedClassName="collapsible-t__opened"
+                            >
+                            <ItemContent
+                              imageEl={el}
+                              key={el.id}
+                              itemIndex={index}
+                              imageIndex={imageIndex}
+                              updateGrid={this.updateImageElGrid}
+                              updateMargin={this.updateImageElMargin}
+                              updateMarginMobile={this.updateImageElMarginMobile}
+                              updateFullBleed={this.updateImageElFullBleed}
+                              updateZIndex={this.updateImageElZIndex}
+                              updateAnchor={this.updateImageElAnchor}
+                              updateAnchorMobile={this.updateImageElMobileAnchor}
+                              updateObjectFit={this.updateImageElObjectFit}
+                              updateObjectFitMobile={this.updateImageElObjectFitMobile}
+                              updateStampEffect={this.updateImageElStampEffect}
+                              onClickLinkExisting={this.onClickLinkExisting}
+                              deleteImage={this.removeSceneContent}
+                              setDistantFieldValue={this.setDistantFieldValue}
+                              sdk={this.props.sdk}/>
+                          </Collapsible>
                         )}
                       </div>
                     )}
@@ -479,3 +515,46 @@ init(sdk => {
 // if (module.hot) {
 //   module.hot.accept();
 // }
+
+const baseScene = () => ({
+  type: 'scene',
+  id: randomId(),
+  title: '',
+  content: [],
+})
+
+const baseSceneItem = () => ({
+    type: "image",
+    id: `image-${randomId()}`,
+    asset: {
+      id: `asset-${randomId()}`,
+      url: "",
+      title: "",
+      contentType: ""
+    },
+    grid: {
+      desktopTl: {x: "0", y: "0"},
+      desktopBr: {x: "0", y: "0"},
+      mobileTl: {x: "0", y: "0"},
+      mobileBr: {x: "0", y: "0"}
+    },
+    margins: {
+      mTop: false,
+      mLeft: false,
+      mBottom: false,
+      mRight: false
+    },
+    marginsMobile: {
+      mTop: false,
+      mLeft: false,
+      mBottom: false,
+      mRight: false
+    },
+    anchor: 'none',
+    anchorMobile: 'none',
+    objectFit: 'none',
+    objectFitMobile: 'none',
+    zIndex: "0",
+    fullBleed: false,
+    stampEffect: false
+})
