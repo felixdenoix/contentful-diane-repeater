@@ -47,9 +47,9 @@ class App extends React.Component {
 
     this.state = {
       preventSorting: true,
-      value: fixedValue,
+      value: {...fixedValue},
       debug: false,
-      scenes: fixedValue,
+      scenes: {...fixedValue},
     }
 
     this.scenesRef = React.createRef();

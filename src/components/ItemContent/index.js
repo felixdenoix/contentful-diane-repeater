@@ -101,7 +101,7 @@ export default function ItemContent({
           <div className="position__wrapper">
             <TextInput
               type="number"
-              value={imageEl.zIndex || "0"}
+              value={imageEl.zIndex}
               maxLength={1}
               onChange={(e) => updateZIndex(itemIndex, imageIndex, e)}/>
           </div>
