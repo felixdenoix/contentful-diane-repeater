@@ -32,6 +32,7 @@
 
 .element__content img {
   max-height: 200px;
+  max-width: 300px;
 }
 
 .position__line {

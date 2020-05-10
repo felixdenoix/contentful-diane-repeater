@@ -71,7 +71,7 @@ class App extends React.Component {
   }
 
   onExternalChange = value => {
-    this.setState({ scenes: this.isIterable(value) ? [...value] : [] });
+    this.setState({ scenes: this.isIterable(value) ? [...this.fixScenes(value)] : [] });
   };
 
   isIterable = object => {
@@ -298,7 +298,9 @@ class App extends React.Component {
 
   fixScenes = (scenes) => {
 
-    return scenes.reduce((scenes, scene) => {
+    console.log('🐯 fixing the scenes !')
+
+    return scenes.reduce((newScenes, scene) => {
 
       const newScene = {...baseScene(), ...scene}
 
@@ -308,9 +310,9 @@ class App extends React.Component {
 
       newScene.content = newSceneContent
 
-      scenes.push(newScene)
+      newScenes.push(newScene)
 
-      return scenes
+      return newScenes
 
     }, [])
 
@@ -319,15 +321,12 @@ class App extends React.Component {
   setScenesFromDebugInput = () => {
     try {
 
-      const value = JSON.parse(this.state.debugInput)
-      const error = null
+      const newVal = JSON.parse(this.state.debugInput)
 
-      // const newVal = JSON.parse(this.state.debugInput)
+      // add fields that might be missing from input with default values
+      const fixedNewVal = this.fixScenes(newVal)
 
-      // // add fields that might be missing from input with default values
-      // const fixedNewVal = this.fixScenes(newVal)
-
-      // const {error, value} = scenesSchema.validate(fixedNewVal)
+      const {error, value} = scenesSchema.validate(fixedNewVal)
 
       if (error) {
 
