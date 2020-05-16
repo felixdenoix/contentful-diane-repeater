@@ -251,6 +251,15 @@ class App extends React.Component {
     })
   }
 
+  updateImageElAutoPlay = (itemIndex, imageIndex, e) => {
+    const newVal = e.currentTarget.checked
+
+    this.setState(({scenes}) => {
+      scenes[itemIndex].content[imageIndex].autoPlay = newVal
+      return {scenes}
+    })
+  }
+
   updateImageElZIndex = (itemIndex, imageIndex, e) => {
     const newVal = e.currentTarget.value
 
@@ -448,6 +457,7 @@ class App extends React.Component {
                               updateFullBleed={this.updateImageElFullBleed}
                               updateZIndex={this.updateImageElZIndex}
                               updateAnchor={this.updateImageElAnchor}
+                              updateAutoPlay={this.updateImageElAutoPlay}
                               updateAnchorMobile={this.updateImageElMobileAnchor}
                               updateObjectFit={this.updateImageElObjectFit}
                               updateObjectFitMobile={this.updateImageElObjectFitMobile}
@@ -555,5 +565,6 @@ const baseSceneItem = () => ({
     objectFitMobile: 'none',
     zIndex: "0",
     fullBleed: false,
-    stampEffect: false
+    stampEffect: false,
+    autoPlay: false,
 })

@@ -5,6 +5,8 @@ import { TextInput, Button } from '@contentful/forma-36-react-components';
 
 import './itemcontent.css'
 
+// TODO: add autoplay option!
+
 export default function ItemContent({
   imageEl,
   updateGrid,
@@ -17,6 +19,7 @@ export default function ItemContent({
   updateObjectFit,
   updateObjectFitMobile,
   updateStampEffect,
+  updateAutoPlay,
   itemIndex,
   imageIndex,
   onClickLinkExisting,
@@ -56,7 +59,7 @@ export default function ItemContent({
           size="small"
           icon="Warning"
           onClick={()=>{deleteImage(itemIndex, imageIndex)}}>
-          remove image
+          remove
         </Button>
       </div>
 
@@ -65,6 +68,21 @@ export default function ItemContent({
         <div className="position__line">
           <div className="image__wrapper">
             {asset}
+            {
+              imageEl.asset.contentType && imageEl.asset.contentType.includes('video') &&
+              <form>
+                <div className="position__wrapper">
+                  <label htmlFor="auto_play">video autoPlay</label>
+                  <input
+                    type="checkbox"
+                    name="auto_play"
+                    id="auto_play"
+                    checked={imageEl.autoPlay}
+                    onChange={e=> updateAutoPlay(itemIndex, imageIndex, e)}
+                    />
+                </div>
+              </form>
+            }
           </div>
           <div className="image__actions">
             <Button buttonType="muted" size="small" icon="Asset" onClick={(e) => onClickLinkExisting(itemIndex, imageIndex, e)}>link existing image</Button>
@@ -262,6 +280,7 @@ ItemContent.propTypes = {
   updateZIndex: PropTypes.func,
   updateAnchor: PropTypes.func,
   updateAnchorMobile: PropTypes.func,
+  updateAutoPlay: PropTypes.func,
   updateObjectFit: PropTypes.func,
   updateObjectFitMobile: PropTypes.func,
   updateStampEffect: PropTypes.func,

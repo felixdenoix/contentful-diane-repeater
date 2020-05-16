@@ -49,6 +49,7 @@ export default Joi.array().items(Joi.object({
     objectFitMobile: Joi.string().required(),
     fullBleed: Joi.boolean().required(),
     zIndex: Joi.string().required(),
-    stampEffect: Joi.boolean().required()
+    stampEffect: Joi.boolean().required(),
+    autoPlay: Joi.boolean().required(),
   }))
 }))
