@@ -12,6 +12,10 @@ export default Joi.array().items(Joi.object({
       title: Joi.string().required(),
       contentType: Joi.string().required(),
       url: Joi.string().required(),
+      dimentions: Joi.object({
+        width: Joi.number().required(),
+        height: Joi.number().required(),
+      })
     }).required(),
     grid: Joi.object({
       desktopTl: Joi.object({

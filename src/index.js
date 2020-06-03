@@ -103,14 +103,15 @@ class App extends React.Component {
   async setFieldLink(asset, itemIndex, imageIndex) {
 
     const title = asset.fields.title[this.findProperLocale()]
-    const {url, contentType} = asset.fields.file[this.findProperLocale()]
+    const {url, contentType, details: {image: imageDimentions}} = asset.fields.file[this.findProperLocale()]
 
     this.setState(({scenes}) => {
       scenes[itemIndex].content[imageIndex].asset = {
         id: asset.sys.id,
         title: title,
         url: url,
-        contentType: contentType
+        contentType: contentType,
+        dimentions: imageDimentions || {width: 0, height: 0}
       }
       return { scenes }
     }, async () => {
@@ -539,7 +540,11 @@ const baseSceneItem = () => ({
       id: `asset-${randomId()}`,
       url: "",
       title: "",
-      contentType: ""
+      contentType: "",
+      dimentions: {
+        width: 0,
+        height: 0
+      }
     },
     grid: {
       desktopTl: {x: "0", y: "0"},
@@ -567,4 +572,8 @@ const baseSceneItem = () => ({
     fullBleed: false,
     stampEffect: false,
     autoPlay: false,
+})
+
+const baseAsset = () => ({
+
 })
