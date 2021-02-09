@@ -63,6 +63,12 @@
   padding-right: 5px;
 }
 
+.position__wrapper img {
+  max-height: 100px;
+  max-width: 100px;
+  margin: 0 20px;
+}
+
 .position__line form {
   display: flex;
   flex-direction: row;

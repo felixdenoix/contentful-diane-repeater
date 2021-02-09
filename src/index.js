@@ -6,7 +6,7 @@ import '@contentful/forma-36-react-components/dist/styles.css';
 import {SortableContainer, SortableElement, SortableHandle} from 'react-sortable-hoc';
 import arrayMove from 'array-move';
 
-import { TextInput, Button } from '@contentful/forma-36-react-components';
+import { TextInput, Button, Spinner } from '@contentful/forma-36-react-components';
 import { init } from 'contentful-ui-extensions-sdk';
 import ItemContent from './components/ItemContent'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -39,6 +39,8 @@ class App extends React.Component {
     sdk: PropTypes.object.isRequired
   };
 
+  // TODO: permettre clic sur label !!
+
   constructor(props) {
     super(props)
 
@@ -50,6 +52,7 @@ class App extends React.Component {
       value: {...fixedValue},
       debug: false,
       scenes: {...fixedValue},
+      saving: false,
     }
 
     this.scenesRef = React.createRef();
@@ -96,6 +99,18 @@ class App extends React.Component {
     }
   };
 
+  onClickLinkExistingStamp = async (itemIndex, imageIndex) => {
+    const selectedAsset = await this.props.sdk.dialogs.selectSingleAsset({
+      locale: this.props.sdk.field.locale
+    });
+
+    try {
+      await this.setFieldLinkStamp(selectedAsset, itemIndex, imageIndex);
+    } catch (err) {
+      this.onError(err);
+    }
+  }
+
   onClickResize = () => {
     this.props.sdk.window.updateHeight()
   }
@@ -107,6 +122,27 @@ class App extends React.Component {
 
     this.setState(({scenes}) => {
       scenes[itemIndex].content[imageIndex].asset = {
+        id: asset.sys.id,
+        title: title,
+        url: url,
+        contentType: contentType,
+        dimentions: imageDimentions || {width: 0, height: 0}
+      }
+      return { scenes }
+    }, async () => {
+
+      await this.setDistantFieldValue()
+
+    })
+  }
+
+  async setFieldLinkStamp(asset, itemIndex, imageIndex) {
+
+    const title = asset.fields.title[this.findProperLocale()]
+    const {url, contentType, details: {image: imageDimentions}} = asset.fields.file[this.findProperLocale()]
+
+    this.setState(({scenes}) => {
+      scenes[itemIndex].content[imageIndex].stampAsset = {
         id: asset.sys.id,
         title: title,
         url: url,
@@ -136,11 +172,13 @@ class App extends React.Component {
   }
 
   setDistantFieldValue = () => {
+    this.setState({saving: true})
     const stateHasChanged = JSON.stringify(this.state.value) !== JSON.stringify(this.state.scenes) // THIS IS ABSOLUTELY DISGUSTING, I KNOW.
     console.log('🐯 stateHasChanged', stateHasChanged)
     return this.props.sdk.field.setValue(this.state.scenes).then((data)=> {
       this.setState({scenes: [...data], value: [...data]})
       console.log('🚀 REMOTE UPDATED')
+      this.setState({saving: false})
     })
   }
 
@@ -244,10 +282,13 @@ class App extends React.Component {
   }
 
   updateImageElStampEffect = (itemIndex, imageIndex, e) => {
+
+    // TODO ADD IMAGE
     const newVal = e.currentTarget.checked
 
     this.setState(({scenes}) => {
       scenes[itemIndex].content[imageIndex].stampEffect = newVal
+      if (!newVal) delete scenes[itemIndex].content[imageIndex].stampAsset
       return {scenes}
     })
   }
@@ -379,7 +420,7 @@ class App extends React.Component {
 
           <Button buttonType="muted" onClick={this.toggleSorting}>Sorting is: {this.state.preventSorting ? 'disabled ❌': 'enabled 👍'} </Button>
 
-          <Button buttonType="positive" onClick={this.setDistantFieldValue}><span role="img">💾</span> SAVE <span role="img">💾</span></Button>
+          <Button buttonType="positive" onClick={this.setDistantFieldValue}><span role="img">💾</span> {this.state.saving && <Spinner/>} SAVE <span role="img">💾</span></Button>
 
         </div>
 
@@ -463,6 +504,7 @@ class App extends React.Component {
                               updateObjectFit={this.updateImageElObjectFit}
                               updateObjectFitMobile={this.updateImageElObjectFitMobile}
                               updateStampEffect={this.updateImageElStampEffect}
+                              onClickLinkExistingStamp={this.onClickLinkExistingStamp}
                               onClickLinkExisting={this.onClickLinkExisting}
                               deleteImage={this.removeSceneContent}
                               setDistantFieldValue={this.setDistantFieldValue}

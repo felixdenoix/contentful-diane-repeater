@@ -19,6 +19,7 @@ export default function ItemContent({
   updateObjectFit,
   updateObjectFitMobile,
   updateStampEffect,
+  onClickLinkExistingStamp,
   updateAutoPlay,
   itemIndex,
   imageIndex,
@@ -72,14 +73,16 @@ export default function ItemContent({
               imageEl.asset.contentType && imageEl.asset.contentType.includes('video') &&
               <form>
                 <div className="position__wrapper">
-                  <label htmlFor="auto_play">video autoPlay</label>
-                  <input
-                    type="checkbox"
-                    name="auto_play"
-                    id="auto_play"
-                    checked={imageEl.autoPlay}
-                    onChange={e=> updateAutoPlay(itemIndex, imageIndex, e)}
-                    />
+                  <label htmlFor="auto_play">
+                    video autoPlay
+                    <input
+                      type="checkbox"
+                      name="auto_play"
+                      id="auto_play"
+                      checked={imageEl.autoPlay}
+                      onChange={e=> updateAutoPlay(itemIndex, imageIndex, e)}
+                      />
+                  </label>
                 </div>
               </form>
             }
@@ -128,13 +131,15 @@ export default function ItemContent({
         <div className="position__line">
           <p>Affichage</p>
           <div className="position__wrapper">
-            <label htmlFor="fullBleed">FullBleed</label>
-            <input
-              type="checkbox"
-              name="fullBleed"
-              id="fullBleed"
-              checked={imageEl.fullBleed}
-              onChange={e=> updateFullBleed(itemIndex, imageIndex, e)}/>
+            <label>
+              FullBleed
+              <input
+                type="checkbox"
+                name="fullBleed"
+                id="fullBleed"
+                checked={imageEl.fullBleed}
+                onChange={e=> updateFullBleed(itemIndex, imageIndex, e)}/>
+            </label>
           </div>
         </div>
         {
@@ -145,14 +150,26 @@ export default function ItemContent({
               <p>Animation</p>
               <form>
                 <div className="position__wrapper">
-                  <label htmlFor="stamp_effect">stampEffect</label>
-                  <input
-                    type="checkbox"
-                    name="stamp_effect"
-                    id="stamp_effect"
-                    checked={imageEl.stampEffect}
-                    onChange={e=> updateStampEffect(itemIndex, imageIndex, e)}
-                    />
+                  <label>
+                    stampEffect
+                    <input
+                      type="checkbox"
+                      name="stamp_effect"
+                      id="stamp_effect"
+                      checked={imageEl.stampEffect}
+                      onChange={e=> updateStampEffect(itemIndex, imageIndex, e)}
+                      />
+                  </label>
+
+
+                  {imageEl.stampEffect && imageEl.stampAsset && <img src={imageEl.stampAsset.url} alt="" onLoad={()=>sdk.window.updateHeight()}/> }
+
+
+                  {
+                    imageEl.stampEffect &&
+                    <Button buttonType="muted" size="small" icon="Asset" onClick={(e) => onClickLinkExistingStamp(itemIndex, imageIndex, e)}>link stamp image</Button>
+                  }
+
                 </div>
               </form>
             </div>
@@ -160,109 +177,130 @@ export default function ItemContent({
         }
         <hr/>
 
-        <h5>Desktop</h5>
-        <div className="position__line">
-          <p>margin</p>
-          { imageEl.margins && Object.keys(imageEl.margins).map(marginPos =>
-            <div className="position__wrapper" key={marginPos}>
-              <label htmlFor={marginPos}>{marginPos}</label>
-              <input
-                type="checkbox"
-                name={marginPos}
-                checked={imageEl.margins[marginPos]}
-                onChange={(e) => updateMargin(marginPos, itemIndex, imageIndex, e)}
-                id={marginPos}/>
-            </div>
-          )}
-        </div>
-        <div className="position__line">
-          <p>anchor</p>
-          <form>
-            {anchorValues.map((anchor) =>
-              <div className="position__wrapper" key={anchor}>
-                <label htmlFor={anchor + '-an-' + imageIndex}>{anchor}</label>
-                <input
-                  type="radio"
-                  name={anchor}
-                  id={anchor + '-an-' + imageEl.id}
-                  value={anchor}
-                  checked={imageEl.anchor === anchor}
-                  onChange={e => updateAnchor(itemIndex, imageIndex, e)}
-                  />
+        <div className="desktop">
+
+          <h5>Desktop</h5>
+          <div className="position__line">
+            <p>margin</p>
+            { imageEl.margins && Object.keys(imageEl.margins).map(marginPos =>
+              <div className="position__wrapper" key={marginPos}>
+                <label>
+                  {marginPos}
+                  <input
+                    type="checkbox"
+                    name={marginPos}
+                    checked={imageEl.margins[marginPos]}
+                    onChange={(e) => updateMargin(marginPos, itemIndex, imageIndex, e)}
+                    id={marginPos}/>
+                </label>
               </div>
             )}
-          </form>
+          </div>
+          <div className="position__line">
+            <p>anchor</p>
+            <form>
+              {anchorValues.map((anchor) =>
+                <div className="position__wrapper" key={anchor}>
+                  <label>
+                    {anchor}
+                    <input
+                      type="radio"
+                      name={anchor}
+                      id={anchor + '-an-' + imageIndex}
+                      value={anchor}
+                      checked={imageEl.anchor === anchor}
+                      onChange={e => updateAnchor(itemIndex, imageIndex, e)}
+                      />
+                  </label>
+                </div>
+              )}
+            </form>
+          </div>
+          <div className="position__line">
+            <p>objectFit</p>
+            <form>
+              {objectFitValues.map((objectFit) =>
+                <div className="position__wrapper" key={objectFit}>
+                  <label>
+                    {objectFit}
+                    <input
+                      type="radio"
+                      name={objectFit}
+                      id={objectFit + '-of-' + imageIndex}
+                      value={objectFit}
+                      checked={imageEl.objectFit === objectFit}
+                      onChange={e => updateObjectFit(itemIndex, imageIndex, e)}
+                      />
+                  </label>
+                </div>
+              )}
+            </form>
+          </div>
         </div>
-        <div className="position__line">
-          <p>objectFit</p>
-          <form>
-            {objectFitValues.map((objectFit) =>
-              <div className="position__wrapper" key={objectFit}>
-                <label htmlFor={objectFit + '-of-' + imageIndex}>{objectFit}</label>
-                <input
-                  type="radio"
-                  name={objectFit}
-                  id={objectFit + '-of-' + imageEl.id}
-                  value={objectFit}
-                  checked={imageEl.objectFit === objectFit}
-                  onChange={e => updateObjectFit(itemIndex, imageIndex, e)}
-                  />
-              </div>
-            )}
-          </form>
-        </div>
+
         <hr/>
 
-        <h5>Mobile</h5>
-        <div className="position__line">
-          <p>margin</p>
-          { imageEl.margins && Object.keys(imageEl.margins).map(marginPos =>
-            <div className="position__wrapper" key={marginPos}>
-              <label htmlFor={marginPos}>{marginPos}</label>
-              <input
-                type="checkbox"
-                name={marginPos}
-                checked={imageEl.marginsMobile && imageEl.marginsMobile[marginPos]}
-                onChange={(e) => updateMarginMobile(marginPos, itemIndex, imageIndex, e)}
-                id={marginPos}/>
-            </div>
-          )}
-        </div>
-        <div className="position__line">
-          <p>anchor</p>
-          <form>
-            {anchorValues.map((anchor) =>
-              <div className="position__wrapper" key={anchor}>
-                <label htmlFor={anchor + '-anm-' + imageIndex}>{anchor}</label>
-                <input
-                  type="radio"
-                  name={anchor}
-                  id={anchor + '-anm-' + imageEl.id}
-                  value={anchor}
-                  checked={imageEl.anchorMobile === anchor}
-                  onChange={e => updateAnchorMobile(itemIndex, imageIndex, e)}
-                  />
+        <div className="mobile">
+
+          <h5>Mobile</h5>
+          <div className="position__line">
+            <p>margin</p>
+            { imageEl.margins && Object.keys(imageEl.margins).map(marginPos =>
+              <div className="position__wrapper" key={marginPos}>
+                <label>
+                  {marginPos}
+                  <input
+                    type="checkbox"
+                    id={marginPos}
+                    name={marginPos}
+                    checked={imageEl.marginsMobile && imageEl.marginsMobile[marginPos]}
+                    onChange={(e) => updateMarginMobile(marginPos, itemIndex, imageIndex, e)}
+                    />
+                </label>
               </div>
             )}
-          </form>
-        </div>
-        <div className="position__line">
-          <p>objectFit</p>
-          <form>
-            {objectFitValues.map((objectFit) =>
-              <div className="position__wrapper" key={objectFit}>
-                <label htmlFor={objectFit + '-ofm-' + imageIndex}>{objectFit}</label>
-                <input
-                  type="radio"
-                  name={objectFit}
-                  id={objectFit + '-ofm-' + imageEl.id}
-                  value={objectFit}
-                  checked={imageEl.objectFitMobile === objectFit}
-                  onChange={e => updateObjectFitMobile(itemIndex, imageIndex, e)}
-                  />
-              </div>
-            )}
-          </form>
+          </div>
+          <div className="position__line">
+            <p>anchor</p>
+            <form>
+              {anchorValues.map((anchor) =>
+                <div className="position__wrapper" key={anchor}>
+                  <label>
+                    {anchor}
+                    <input
+                      type="radio"
+                      name={anchor}
+                      id={anchor + '-anm-' + imageIndex}
+                      value={anchor}
+                      checked={imageEl.anchorMobile === anchor}
+                      onChange={e => updateAnchorMobile(itemIndex, imageIndex, e)}
+                      />
+                  </label>
+                </div>
+              )}
+            </form>
+          </div>
+          <div className="position__line">
+            <p>objectFit</p>
+            <form>
+              {objectFitValues.map((objectFit) =>
+                <div className="position__wrapper" key={objectFit}>
+                  <label>
+                    {objectFit}
+                    <input
+                      type="radio"
+                      name={objectFit}
+                      id={objectFit + '-ofm-' + imageIndex}
+                      value={objectFit}
+                      checked={imageEl.objectFitMobile === objectFit}
+                      onChange={e => updateObjectFitMobile(itemIndex, imageIndex, e)}
+                      />
+                  </label>
+                </div>
+              )}
+            </form>
+          </div>
+
         </div>
 
       </div>
@@ -284,6 +322,7 @@ ItemContent.propTypes = {
   updateObjectFit: PropTypes.func,
   updateObjectFitMobile: PropTypes.func,
   updateStampEffect: PropTypes.func,
+  onClickLinkExistingStamp: PropTypes.func,
   itemIndex: PropTypes.number,
   imageIndex: PropTypes.number,
   onClickLinkExisting: PropTypes.func,

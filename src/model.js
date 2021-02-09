@@ -17,6 +17,16 @@ export default Joi.array().items(Joi.object({
         height: Joi.number().required(),
       })
     }).required(),
+    stampAsset: Joi.object({
+      id: Joi.string().required(),
+      title: Joi.string().required(),
+      contentType: Joi.string().required(),
+      url: Joi.string().required(),
+      dimentions: Joi.object({
+        width: Joi.number().required(),
+        height: Joi.number().required(),
+      })
+    }),
     grid: Joi.object({
       desktopTl: Joi.object({
         x: Joi.string().pattern(/^[0-9]+$/).required(),
