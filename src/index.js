@@ -12,10 +12,7 @@ import ItemContent from './components/ItemContent'
 import ErrorBoundary from './components/ErrorBoundary'
 
 import scenesSchema from './model'
-
-import {
-  randomId,
-} from './utils';
+import {baseScene, baseSceneItem} from './baseItems'
 
 import './index.css';
 import Collapsible from 'react-collapsible';
@@ -46,6 +43,8 @@ class App extends React.Component {
 
     const fieldValue = this.props.sdk.field.getValue(this.findProperLocale()) || []
     const fixedValue = this.fixScenes(fieldValue)
+
+    console.log('🐯 this.props.sdk', this.props.sdk)
 
     this.state = {
       preventSorting: true,
@@ -118,7 +117,7 @@ class App extends React.Component {
   async setFieldLink(asset, itemIndex, imageIndex) {
 
     const title = asset.fields.title[this.findProperLocale()]
-    const {url, contentType, details: {image: imageDimentions}} = asset.fields.file[this.findProperLocale()]
+    const {url, contentType, details: {image: imageDimentions, size}} = asset.fields.file[this.findProperLocale()]
 
     this.setState(({scenes}) => {
       scenes[itemIndex].content[imageIndex].asset = {
@@ -126,7 +125,8 @@ class App extends React.Component {
         title: title,
         url: url,
         contentType: contentType,
-        dimentions: imageDimentions || {width: 0, height: 0}
+        dimentions: imageDimentions || {width: 0, height: 0},
+        size
       }
       return { scenes }
     }, async () => {
@@ -139,7 +139,7 @@ class App extends React.Component {
   async setFieldLinkStamp(asset, itemIndex, imageIndex) {
 
     const title = asset.fields.title[this.findProperLocale()]
-    const {url, contentType, details: {image: imageDimentions}} = asset.fields.file[this.findProperLocale()]
+    const {url, contentType, details: {image: imageDimentions, size}} = asset.fields.file[this.findProperLocale()]
 
     this.setState(({scenes}) => {
       scenes[itemIndex].content[imageIndex].stampAsset = {
@@ -147,7 +147,8 @@ class App extends React.Component {
         title: title,
         url: url,
         contentType: contentType,
-        dimentions: imageDimentions || {width: 0, height: 0}
+        dimentions: imageDimentions || {width: 0, height: 0},
+        size
       }
       return { scenes }
     }, async () => {
@@ -350,13 +351,42 @@ class App extends React.Component {
   fixScenes = (scenes) => {
 
     console.log('🐯 fixing the scenes !')
+    // const assetNeedingUpdate = []
 
-    return scenes.reduce((newScenes, scene) => {
+    scenes.reduce((newScenes, scene) => {
 
       const newScene = {...baseScene(), ...scene}
 
-      const newSceneContent = scene.content.map(el => {
-        return {...baseSceneItem(), ...el}
+      const newSceneContent = scene.content.map( el => {
+        const fixedSceneContent = {...baseSceneItem()}
+
+        fixedSceneContent.asset = {
+          ...fixedSceneContent.asset,
+          ...el.asset
+        }
+        fixedSceneContent.grid = {
+          ...fixedSceneContent.grid,
+          ...el.grid
+        }
+        fixedSceneContent.margins = {
+          ...fixedSceneContent.margins,
+          ...el.margins
+        }
+        fixedSceneContent.marginsMobile = {
+          ...fixedSceneContent.marginsMobile,
+          ...el.marginsMobile
+        }
+
+        // if (fixedSceneContent.asset
+        //   && fixedSceneContent.asset.id
+        //   && (!fixedSceneContent.asset.size || !(fixedSceneContent.asset.dimentions && fixedSceneContent.asset.dimentions.x))) {
+
+        // handle asset retrieval for values input
+        //     assetNeedingUpdate.push(fixedSceneContent.asset.id)
+
+        // }
+
+        return fixedSceneContent
       })
 
       newScene.content = newSceneContent
@@ -366,6 +396,19 @@ class App extends React.Component {
       return newScenes
 
     }, [])
+
+    // TODO FOR AUTO FIX
+    // if (assetNeedingUpdate.length > 0) {
+    //   console.log('🐯 assetNeedingUpdate', assetNeedingUpdate)
+    //   this.props.sdk.space.getAssets({}).then(console.log)
+    //     // console.log('🐯 fixedSceneContent.asset.id', fixedSceneContent.asset.id)
+    //     // const asset = await this.props.sdk.space.getAsset(fixedSceneContent.asset.id)
+    //     // const {details: {image: imageDimentions, size}} = asset.fields.file[this.findProperLocale()]
+    //     // fixedSceneContent.asset.size = size;
+    //     // fixedSceneContent.asset.dimentions = imageDimentions;
+    // }
+
+    return scenes
 
   }
 
@@ -491,6 +534,7 @@ class App extends React.Component {
                             <ItemContent
                               imageEl={el}
                               key={el.id}
+                              id={el.id}
                               itemIndex={index}
                               imageIndex={imageIndex}
                               updateGrid={this.updateImageElGrid}
@@ -567,55 +611,3 @@ init(sdk => {
 // if (module.hot) {
 //   module.hot.accept();
 // }
-
-const baseScene = () => ({
-  type: 'scene',
-  id: randomId(),
-  title: '',
-  content: [],
-})
-
-const baseSceneItem = () => ({
-    type: "image",
-    id: `image-${randomId()}`,
-    asset: {
-      id: `asset-${randomId()}`,
-      url: "",
-      title: "",
-      contentType: "",
-      dimentions: {
-        width: 0,
-        height: 0
-      }
-    },
-    grid: {
-      desktopTl: {x: "0", y: "0"},
-      desktopBr: {x: "0", y: "0"},
-      mobileTl: {x: "0", y: "0"},
-      mobileBr: {x: "0", y: "0"}
-    },
-    margins: {
-      mTop: false,
-      mLeft: false,
-      mBottom: false,
-      mRight: false
-    },
-    marginsMobile: {
-      mTop: false,
-      mLeft: false,
-      mBottom: false,
-      mRight: false
-    },
-    anchor: 'none',
-    anchorMobile: 'none',
-    objectFit: 'none',
-    objectFitMobile: 'none',
-    zIndex: "0",
-    fullBleed: false,
-    stampEffect: false,
-    autoPlay: false,
-})
-
-const baseAsset = () => ({
-
-})

@@ -8,6 +8,7 @@ import './itemcontent.css'
 // TODO: add autoplay option!
 
 export default function ItemContent({
+  id,
   imageEl,
   updateGrid,
   updateMargin,
@@ -39,7 +40,7 @@ export default function ItemContent({
 
     } else {
 
-      asset = <img src={imageEl.asset.url} alt="" onLoad={()=>sdk.window.updateHeight()}/>
+      asset = <img src={imageEl.asset.url + '?w=200'} alt="" onLoad={()=>sdk.window.updateHeight()}/>
 
     }
   }
@@ -73,12 +74,12 @@ export default function ItemContent({
               imageEl.asset.contentType && imageEl.asset.contentType.includes('video') &&
               <form>
                 <div className="position__wrapper">
-                  <label htmlFor="auto_play">
+                  <label htmlFor={id + "auto_play"}>
                     video autoPlay
                     <input
                       type="checkbox"
                       name="auto_play"
-                      id="auto_play"
+                      id={id + "auto_play"}
                       checked={imageEl.autoPlay}
                       onChange={e=> updateAutoPlay(itemIndex, imageIndex, e)}
                       />
@@ -136,7 +137,7 @@ export default function ItemContent({
               <input
                 type="checkbox"
                 name="fullBleed"
-                id="fullBleed"
+                id={id + "fullBleed"}
                 checked={imageEl.fullBleed}
                 onChange={e=> updateFullBleed(itemIndex, imageIndex, e)}/>
             </label>
@@ -155,7 +156,7 @@ export default function ItemContent({
                     <input
                       type="checkbox"
                       name="stamp_effect"
-                      id="stamp_effect"
+                      id={id + "stamp_effect"}
                       checked={imageEl.stampEffect}
                       onChange={e=> updateStampEffect(itemIndex, imageIndex, e)}
                       />
@@ -191,7 +192,7 @@ export default function ItemContent({
                     name={marginPos}
                     checked={imageEl.margins[marginPos]}
                     onChange={(e) => updateMargin(marginPos, itemIndex, imageIndex, e)}
-                    id={marginPos}/>
+                    id={id + marginPos}/>
                 </label>
               </div>
             )}
@@ -206,7 +207,7 @@ export default function ItemContent({
                     <input
                       type="radio"
                       name={anchor}
-                      id={anchor + '-an-' + imageIndex}
+                      id={id + anchor + '-an-' + imageIndex}
                       value={anchor}
                       checked={imageEl.anchor === anchor}
                       onChange={e => updateAnchor(itemIndex, imageIndex, e)}
@@ -226,7 +227,7 @@ export default function ItemContent({
                     <input
                       type="radio"
                       name={objectFit}
-                      id={objectFit + '-of-' + imageIndex}
+                      id={id + objectFit + '-of-' + imageIndex}
                       value={objectFit}
                       checked={imageEl.objectFit === objectFit}
                       onChange={e => updateObjectFit(itemIndex, imageIndex, e)}
@@ -251,7 +252,7 @@ export default function ItemContent({
                   {marginPos}
                   <input
                     type="checkbox"
-                    id={marginPos}
+                    id={id + marginPos}
                     name={marginPos}
                     checked={imageEl.marginsMobile && imageEl.marginsMobile[marginPos]}
                     onChange={(e) => updateMarginMobile(marginPos, itemIndex, imageIndex, e)}
@@ -270,7 +271,7 @@ export default function ItemContent({
                     <input
                       type="radio"
                       name={anchor}
-                      id={anchor + '-anm-' + imageIndex}
+                      id={id + anchor + '-anm-' + imageIndex}
                       value={anchor}
                       checked={imageEl.anchorMobile === anchor}
                       onChange={e => updateAnchorMobile(itemIndex, imageIndex, e)}
@@ -290,7 +291,7 @@ export default function ItemContent({
                     <input
                       type="radio"
                       name={objectFit}
-                      id={objectFit + '-ofm-' + imageIndex}
+                      id={id + objectFit + '-ofm-' + imageIndex}
                       value={objectFit}
                       checked={imageEl.objectFitMobile === objectFit}
                       onChange={e => updateObjectFitMobile(itemIndex, imageIndex, e)}
