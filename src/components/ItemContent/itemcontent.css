@@ -1,5 +1,6 @@
 .element__content {
   max-width: 100%;
+  position: relative;
 }
 
 .element__content .image {
@@ -8,18 +9,7 @@
   align-items: center;
 }
 
-.element__content .title {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-
-.element__content .title button {
-  height: auto;
-  margin-left: 10px;
-}
-
-.image__actions {
+.element__content .image__actions {
   width: 100%;
   text-align: center;
 }
@@ -35,11 +25,43 @@
   max-width: 300px;
 }
 
+.element__content .delete {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.element__content .z-input {
+  margin: 10px 0;
+}
+.element__content .z-input span {
+  margin-right: 8px;
+}
+.element__content .z-input .input {
+  width: fit-content;
+}
+
+.element__content .positions .positions__grid {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 20px;
+  width: 100%;
+}
+
+.element__content .positions .positions__columns {
+  width: 100%;
+}
+
 .position__line {
   display: flex;
   flex-direction: row;
-  margin-bottom: 10px;
   align-items: center;
+}
+
+.position__line h4 {
+  margin-bottom: 8px;
 }
 
 .position__line .image__actions {
@@ -56,20 +78,28 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin-right: 10px;
-}
-
-.position__line .position__wrapper span {
-  padding-right: 5px;
+  margin-right: 20px;
 }
 
 .position__wrapper img {
   max-height: 100px;
-  max-width: 100px;
+  max-width: 50px;
   margin: 0 20px;
 }
 
 .position__line form {
   display: flex;
   flex-direction: row;
+}
+
+td {
+  vertical-align: middle !important;
+}
+
+.element__content hr {
+  color: #cfd9e0;
+}
+
+.element__content hr .light {
+  color: #e7ebee;
 }

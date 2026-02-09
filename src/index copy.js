@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import '@contentful/forma-36-react-components/dist/styles.css';
 
-import { Spinner } from '@contentful/forma-36-react-components';
 import { init } from 'contentful-ui-extensions-sdk';
 import UploadView from './components/UploadView';
 import ProgressView from './components/ProgressView';
@@ -30,11 +29,14 @@ class App extends React.Component {
   };
 
   componentDidMount() {
-    console.log('🐯 this.props.sdk.field.getValue(this.findProperLocale())', this.props.sdk.field.getValue(this.findProperLocale()))
-    console.log('🐯 this.props.sdk', this.props.sdk)
-    console.log('🐯 this.state.value', this.state.value)
+    console.log(
+      '🐯 this.props.sdk.field.getValue(this.findProperLocale())',
+      this.props.sdk.field.getValue(this.findProperLocale())
+    );
+    console.log('🐯 this.props.sdk', this.props.sdk);
+    console.log('🐯 this.state.value', this.state.value);
 
-    console.log('🐯 this.props.sdk.window', this.props.sdk.window)
+    console.log('🐯 this.props.sdk.window', this.props.sdk.window);
 
     this.props.sdk.window.startAutoResizer();
 
@@ -42,24 +44,24 @@ class App extends React.Component {
     this.detachExternalChangeHandler = this.props.sdk.field.onValueChanged(this.onExternalChange);
 
     if (this.state.value) {
-      const retrieveImages = []
+      const retrieveImages = [];
 
-      this.state.value.map( asset => {
-        console.log('🐯 asset', asset.value)
-        const assetPromise = this.props.sdk.space.getAsset(asset.value.image.sys.id)
-        retrieveImages.push(assetPromise)
-      })
+      this.state.value.map(asset => {
+        console.log('🐯 asset', asset.value);
+        const assetPromise = this.props.sdk.space.getAsset(asset.value.image.sys.id);
+        retrieveImages.push(assetPromise);
+      });
 
-      console.log('🐯 retrieveImages', retrieveImages)
+      console.log('🐯 retrieveImages', retrieveImages);
 
       // TODO: insert asset into value
 
-      Promise.all(retrieveImages).then((res) => {
-        console.log('🐯 res', res)
-        console.log('🐯 res[0]', res[0])
+      Promise.all(retrieveImages).then(res => {
+        console.log('🐯 res', res);
+        console.log('🐯 res[0]', res[0]);
 
-        this.setState({assets: [...res]})
-      })
+        this.setState({ assets: [...res] });
+      });
     }
   }
 
@@ -121,7 +123,7 @@ class App extends React.Component {
     }
   };
 
-  onClickEdit = (asset) => {
+  onClickEdit = asset => {
     this.props.sdk.navigator.openAsset(asset.sys.id, {
       slideIn: true
     });
@@ -234,7 +236,8 @@ class App extends React.Component {
       asset
     });
 
-    await this.props.sdk.field.setValue( // TODO
+    await this.props.sdk.field.setValue(
+      // TODO
       [
         ...this.state.value,
         {
@@ -365,8 +368,8 @@ class App extends React.Component {
     this.setUploadProgress(100);
   };
 
-  unlinkAsset = (e) => {
-    console.log('🐯 e', e)
+  unlinkAsset = e => {
+    console.log('🐯 e', e);
     this.props.sdk.field.setValue([], this.findProperLocale());
     this.setState({
       value: [],
@@ -375,54 +378,55 @@ class App extends React.Component {
   };
 
   setFieldLink(asset) {
-    console.log('🐯 this.state.value', this.state)
-    console.log('🐯 this.state.value', this.state.value)
-    const previousValue = this.state.value || []
-    const assetId = asset.sys.id
-    const fileUrl = asset.fields.file[this.findProperLocale()].url
+    console.log('🐯 this.state.value', this.state);
+    console.log('🐯 this.state.value', this.state.value);
+    const previousValue = this.state.value || [];
+    const assetId = asset.sys.id;
+    const fileUrl = asset.fields.file[this.findProperLocale()].url;
 
-    return this.props.sdk.field
-      .setValue(
-        [
-          ...previousValue,
-          {
-            "type": 'Object',
-            "value": {
-              desktopTl: "2.2",
-              desktopBr: "3.3",
-              image:{
-                url: fileUrl,
-                sys: {
-                  type: 'Link',
-                  linkType: 'Asset',
-                  id: assetId
+    return (
+      this.props.sdk.field
+        .setValue(
+          [
+            ...previousValue,
+            {
+              type: 'Object',
+              value: {
+                desktopTl: '2.2',
+                desktopBr: '3.3',
+                image: {
+                  url: fileUrl,
+                  sys: {
+                    type: 'Link',
+                    linkType: 'Asset',
+                    id: assetId
+                  }
                 }
               }
             }
-          }
-        ],
-        this.findProperLocale()
-      )
-      // .then(() => {
-      // })
-      .then(() => {
-        console.log('🐯 this.sate.value', this.state.value)
-        const value = this.props.sdk.field.getValue(this.findProperLocale())
-        console.log('🐯 value', value)
-        debugger
-        // const asset = this.state.value.find(asset => {
+          ],
+          this.findProperLocale()
+        )
+        // .then(() => {
+        // })
+        .then(() => {
+          console.log('🐯 this.sate.value', this.state.value);
+          const value = this.props.sdk.field.getValue(this.findProperLocale());
+          console.log('🐯 value', value);
+          debugger;
+          // const asset = this.state.value.find(asset => {
           //   console.log('🐯asset',asset)
           //   return asset.sys.id === assetId
           // })
-        return this.props.sdk.space
-          .getAsset(assetId)
-          .then(asset => this.setState(state=>{
-            console.log('🐯 asset', asset)
-            console.log('🐯 this.state.assets', state.assets)
-            return { assets: [...state.assets, asset] }
-          }))
-      }
-      );
+          return this.props.sdk.space.getAsset(assetId).then(asset =>
+            this.setState(state => {
+              console.log('🐯 asset', asset);
+              console.log('🐯 this.state.assets', state.assets);
+              return { assets: [...state.assets, asset] };
+            })
+          );
+        })
+    );
   }
 
   setUploadProgress(percent) {
@@ -432,36 +436,39 @@ class App extends React.Component {
     });
   }
 
-  files (props) {
+  files(props) {
     if (props.uploading) {
-      return (
-        'uploading'
-        // <ProgressView
-        //   imageUrl={this.state.imageUrl}
-        //   base64Prefix={this.state.base64Prefix}
-        //   base64Data={this.state.base64Data}
-        //   uploadProgress={this.state.uploadProgress}
-        // />
-        );
+      return 'uploading';
+      // <ProgressView
+      //   imageUrl={this.state.imageUrl}
+      //   base64Prefix={this.state.base64Prefix}
+      //   base64Data={this.state.base64Data}
+      //   uploadProgress={this.state.uploadProgress}
+      // />
     } else if (!props.isDraggingOver && props.assets) {
       // Display existing asset if user is not dragging over an image
-      console.log('🐯 RENDER FILEVIEW', props.assets)
-      return props.assets.map((asset, index) =>
-        <div key={asset.sys.id+index}>
+      console.log('🐯 RENDER FILEVIEW', props.assets);
+      return props.assets.map((asset, index) => (
+        <div key={asset.sys.id + index}>
           <p>{JSON.stringify(this.state.value[index], null, 2)}</p>
           <p>{JSON.stringify(asset, null, 2)}</p>
-          <img src={this.state.value[index].value.image.url} onLoad={()=> {this.props.sdk.window.updateHeight()}} alt=""/>
-
+          <img
+            src={this.state.value[index].value.image.url}
+            onLoad={() => {
+              this.props.sdk.window.updateHeight();
+            }}
+            alt=""
+          />
         </div>
-      );
-    // } else if (!this.state.isDraggingOver && this.state.value) {
-    //   // If `asset` is not set but `value` is, the entry was just opened
-    //   // and we're currently loading the asset value.
-    //   return (
-    //     <main className="spinner viewport centered">
-    //       <Spinner />
-    //     </main>
-    //   );
+      ));
+      // } else if (!this.state.isDraggingOver && this.state.value) {
+      //   // If `asset` is not set but `value` is, the entry was just opened
+      //   // and we're currently loading the asset value.
+      //   return (
+      //     <main className="spinner viewport centered">
+      //       <Spinner />
+      //     </main>
+      //   );
     }
   }
 
@@ -480,7 +487,6 @@ class App extends React.Component {
     );
   };
 }
-
 
 init(sdk => {
   ReactDOM.render(<App sdk={sdk} />, document.getElementById('root'));
