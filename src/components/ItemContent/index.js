@@ -1,9 +1,28 @@
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
+import Collapsible from 'react-collapsible';
 
-import { TextInput, Button } from '@contentful/forma-36-react-components';
+import Asset from './Asset';
+import GridFields from './GridFields';
+
+import {
+  TextInput,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow
+} from '@contentful/forma-36-react-components';
 
 import './itemcontent.css';
+
+// margins labels are coming from object - too lazy to refactor - sort to ensure consistent ui
+const marginsOrder = ['mTop', 'mRight', 'mBottom', 'mLeft'];
+function sortMargins(a, b) {
+  return marginsOrder.indexOf(a) - marginsOrder.indexOf(b);
+}
+
 export default function ItemContent({
   id,
   imageEl,
@@ -22,48 +41,32 @@ export default function ItemContent({
   itemIndex,
   imageIndex,
   onClickLinkExisting,
-  deleteImage,
+  deleteAsset,
   sdk
 }) {
-  let asset;
-
-  if (imageEl.asset.id && imageEl.asset.url) {
-    if (imageEl.asset.contentType && imageEl.asset.contentType.includes('video')) {
-      asset = (
-        // eslint-disable-next-line jsx-a11y/media-has-caption
-        <video width="320" height="240" controls>
-          <source src={'https:' + imageEl.asset.url} type={imageEl.asset.contentType} />
-        </video>
-      );
-    } else {
-      asset = (
-        <img src={imageEl.asset.url + '?w=200'} alt="" onLoad={() => sdk.window.updateHeight()} />
-      );
-    }
-  }
-
   const anchorValues = ['top', 'left', 'bottom', 'right', 'center', 'none'];
   const objectFitValues = ['contain', 'cover', 'none'];
 
   return (
     <div className="element__content">
-      <div className="title">
-        <h3>{imageEl.id}</h3>
+      <div className="delete">
         <Button
           className="hide"
           buttonType="negative"
-          size="small"
-          icon="Warning"
-          onClick={() => deleteImage(itemIndex, imageIndex)}>
-          remove
-        </Button>
+          size="medium"
+          icon="Delete"
+          onClick={() => deleteAsset(itemIndex, imageIndex)}
+        />
       </div>
 
       <div className="image">
-        <h4>Image</h4> <br />
+        <h4>
+          Image (<code>id: {imageEl.id}</code>)
+        </h4>{' '}
+        <br />
         <div className="position__line">
           <div className="image__wrapper">
-            {asset}
+            <Asset asset={imageEl.asset} sdk={sdk} />
             {imageEl.asset.contentType && imageEl.asset.contentType.includes('video') && (
               <div className="position__wrapper">
                 <label htmlFor={id + 'auto_play'}>
@@ -85,219 +88,248 @@ export default function ItemContent({
               size="small"
               icon="Asset"
               onClick={e => onClickLinkExisting(itemIndex, imageIndex, e)}>
-              link existing image
+              link asset
             </Button>
           </div>
         </div>
       </div>
 
       <div className="positions">
-        <h4>Display</h4>
-        {imageEl.grid &&
-          ['desktopTl', 'desktopBr', 'mobileTl', 'mobileBr'].map(pos => (
-            <div className="position__line" key={pos}>
-              <p>{pos}</p>
-              <div className="position__wrapper">
-                <span>x:</span>{' '}
-                <TextInput
-                  type="number"
-                  value={imageEl.grid[pos].x}
-                  maxLength={1}
-                  onChange={e => updateGrid(pos, 'x', itemIndex, imageIndex, e)}
-                />
-              </div>
-              <div className="position__wrapper">
-                <span>y:</span>{' '}
-                <TextInput
-                  type="number"
-                  value={imageEl.grid[pos].y}
-                  maxLength={1}
-                  onChange={e => updateGrid(pos, 'y', itemIndex, imageIndex, e)}
-                />
-              </div>
-            </div>
-          ))}
-        <hr />
-        <div className="position__line">
-          <p>zIndex</p>
-          <div className="position__wrapper">
+        <div className="line line-justified">
+          <h4>Grid Positionning</h4>
+          <label className="full-bleed">
+            Cover (image fills the whole grid)
+            <input
+              type="checkbox"
+              name="fullBleed"
+              id={id + 'fullBleed'}
+              checked={imageEl.fullBleed}
+              onChange={e => updateFullBleed(itemIndex, imageIndex, e)}
+            />
+          </label>
+        </div>
+
+        {!imageEl.fullBleed && (
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell />
+                <TableCell align="center">
+                  top-left <code>▛</code>
+                </TableCell>
+                <TableCell align="center">
+                  bottom-right <code>▟</code>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Object.entries({
+                desktop: ['desktopTl', 'desktopBr'],
+                mobile: ['mobileTl', 'mobileBr']
+              }).map(([key, value]) => (
+                <TableRow key={key}>
+                  <TableCell align="center">{key}</TableCell>
+                  {value.map(pos => (
+                    <TableCell key={imageEl.id + pos}>
+                      <GridFields
+                        updateGrid={updateGrid}
+                        pos={pos}
+                        itemIndex={itemIndex}
+                        imageIndex={imageIndex}
+                        imageEl={imageEl}
+                      />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+
+        <div className="line">
+          <label className="line z-input">
+            <span className="inline">zIndex</span>
             <TextInput
+              className="input inline"
               type="number"
               value={imageEl.zIndex}
-              maxLength={1}
+              maxLength={2}
               onChange={e => updateZIndex(itemIndex, imageIndex, e)}
             />
-          </div>
+          </label>
         </div>
+
         <hr />
-        <div className="position__line">
-          <p>Affichage</p>
-          <div className="position__wrapper">
-            <label>
-              FullBleed
-              <input
-                type="checkbox"
-                name="fullBleed"
-                id={id + 'fullBleed'}
-                checked={imageEl.fullBleed}
-                onChange={e => updateFullBleed(itemIndex, imageIndex, e)}
-              />
-            </label>
-          </div>
-        </div>
 
         {imageEl.asset.contentType && imageEl.asset.contentType.includes('image') && (
           <Fragment>
-            <hr />
-            <div className="position__line">
-              <p>Animation</p>
-              <div className="position__wrapper">
-                <label>
-                  stampEffect
-                  <input
-                    type="checkbox"
-                    name="stamp_effect"
-                    id={id + 'stamp_effect'}
-                    checked={imageEl.stampEffect}
-                    onChange={e => updateStampEffect(itemIndex, imageIndex, e)}
-                  />
-                </label>
+            <div className="py-4">
+              <h4 className="m-0">Animation</h4>
+              <div className="position__line">
+                <div className="position__wrapper">
+                  <label>
+                    Stamp effect
+                    <input
+                      type="checkbox"
+                      name="stamp_effect"
+                      id={id + 'stamp_effect'}
+                      checked={imageEl.stampEffect}
+                      onChange={e => updateStampEffect(itemIndex, imageIndex, e)}
+                    />
+                  </label>
 
-                {imageEl.stampEffect && imageEl.stampAsset && (
-                  <img src={imageEl.stampAsset.url} alt="" />
-                )}
+                  {imageEl.stampEffect && imageEl.stampAsset && (
+                    <img src={imageEl.stampAsset.url} alt="" />
+                  )}
 
-                {imageEl.stampEffect && (
-                  <Button
-                    buttonType="muted"
-                    size="small"
-                    icon="Asset"
-                    onClick={e => onClickLinkExistingStamp(itemIndex, imageIndex, e)}>
-                    link stamp image
-                  </Button>
-                )}
+                  {imageEl.stampEffect && (
+                    <Button
+                      buttonType="muted"
+                      size="small"
+                      icon="Asset"
+                      onClick={e => onClickLinkExistingStamp(itemIndex, imageIndex, e)}>
+                      link stamp
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
+
+            <hr />
           </Fragment>
         )}
-        <hr />
 
-        <div className="desktop">
-          <h5>Desktop</h5>
-          <div className="position__line">
-            <p>margin</p>
-            {imageEl.margins &&
-              Object.keys(imageEl.margins).map(marginPos => (
-                <div className="position__wrapper" key={marginPos}>
-                  <label>
-                    {marginPos}
-                    <input
-                      type="checkbox"
-                      name={marginPos}
-                      checked={imageEl.margins[marginPos]}
-                      onChange={e => updateMargin(marginPos, itemIndex, imageIndex, e)}
-                      id={id + marginPos}
-                    />
-                  </label>
-                </div>
-              ))}
-          </div>
-          <div className="position__line">
-            <p>anchor</p>
-            {anchorValues.map(anchor => (
-              <div className="position__wrapper" key={anchor}>
-                <label>
-                  {anchor}
-                  <input
-                    type="radio"
-                    name={anchor}
-                    id={id + anchor + '-an-' + imageIndex}
-                    value={anchor}
-                    checked={imageEl.anchor === anchor}
-                    onChange={e => updateAnchor(itemIndex, imageIndex, e)}
-                  />
-                </label>
+        <div>
+          <Collapsible
+            trigger={<h4>Element Positionning</h4>}
+            triggerClassName="collapsible-t"
+            triggerOpenedClassName="collapsible-t__opened">
+            <div className="desktop">
+              <h5>Desktop</h5>
+              <div className="position__line">
+                <p>margin</p>
+                {imageEl.margins &&
+                  Object.keys(imageEl.margins)
+                    .sort(sortMargins)
+                    .map(marginPos => (
+                      <div className="position__wrapper" key={'d-margin' + marginPos}>
+                        <label>
+                          {marginPos}
+                          <input
+                            type="checkbox"
+                            name={marginPos}
+                            checked={imageEl.margins[marginPos] && 'checked'}
+                            onChange={e => updateMargin(marginPos, itemIndex, imageIndex, e)}
+                            id={id + marginPos}
+                          />
+                        </label>
+                      </div>
+                    ))}
               </div>
-            ))}
-          </div>
-          <div className="position__line">
-            <p>objectFit</p>
-            {objectFitValues.map(objectFit => (
-              <div className="position__wrapper" key={objectFit}>
-                <label>
-                  {objectFit}
-                  <input
-                    type="radio"
-                    name={objectFit}
-                    id={id + objectFit + '-of-' + imageIndex}
-                    value={objectFit}
-                    checked={imageEl.objectFit === objectFit}
-                    onChange={e => updateObjectFit(itemIndex, imageIndex, e)}
-                  />
-                </label>
+              <div className="position__line">
+                <p>anchor</p>
+                {anchorValues.map(anchor => (
+                  <div className="position__wrapper" key={'d-anchor' + anchor}>
+                    <label>
+                      {anchor}
+                      <input
+                        type="radio"
+                        // Shared name for the whole group
+                        name={`anchor-desktop-${id}-${imageIndex}`}
+                        id={id + anchor + '-an-' + imageIndex}
+                        value={anchor}
+                        // Use a strict boolean
+                        checked={imageEl.anchor === anchor}
+                        onChange={e => updateAnchor(itemIndex, imageIndex, e)}
+                      />
+                    </label>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-
-        <hr />
-
-        <div className="mobile">
-          <h5>Mobile</h5>
-          <div className="position__line">
-            <p>margin</p>
-            {imageEl.margins &&
-              Object.keys(imageEl.margins).map(marginPos => (
-                <div className="position__wrapper" key={marginPos}>
-                  <label>
-                    {marginPos}
-                    <input
-                      type="checkbox"
-                      id={id + marginPos}
-                      name={marginPos}
-                      checked={imageEl.marginsMobile && imageEl.marginsMobile[marginPos]}
-                      onChange={e => updateMarginMobile(marginPos, itemIndex, imageIndex, e)}
-                    />
-                  </label>
-                </div>
-              ))}
-          </div>
-          <div className="position__line">
-            <p>anchor</p>
-            {anchorValues.map(anchor => (
-              <div className="position__wrapper" key={anchor}>
-                <label>
-                  {anchor}
-                  <input
-                    type="radio"
-                    name={anchor}
-                    id={id + anchor + '-anm-' + imageIndex}
-                    value={anchor}
-                    checked={imageEl.anchorMobile === anchor}
-                    onChange={e => updateAnchorMobile(itemIndex, imageIndex, e)}
-                  />
-                </label>
+              <div className="position__line">
+                <p>objectFit</p>
+                {objectFitValues.map(objectFit => (
+                  <div className="position__wrapper" key={'d-objectfit' + objectFit}>
+                    <label>
+                      {objectFit}
+                      <input
+                        type="radio"
+                        // Shared name for this specific group
+                        name={`objectFit-desktop-${id}-${imageIndex}`}
+                        id={id + objectFit + '-of-' + imageIndex}
+                        value={objectFit}
+                        checked={imageEl.objectFit === objectFit}
+                        onChange={e => updateObjectFit(itemIndex, imageIndex, e)}
+                      />
+                    </label>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="position__line">
-            <p>objectFit</p>
-            {objectFitValues.map(objectFit => (
-              <div className="position__wrapper" key={objectFit}>
-                <label>
-                  {objectFit}
-                  <input
-                    type="radio"
-                    name={objectFit}
-                    id={id + objectFit + '-ofm-' + imageIndex}
-                    value={objectFit}
-                    checked={imageEl.objectFitMobile === objectFit}
-                    onChange={e => updateObjectFitMobile(itemIndex, imageIndex, e)}
-                  />
-                </label>
+            </div>
+            <hr className="light" />
+            <div className="mobile">
+              <h5>Mobile</h5>
+              <div className="position__line">
+                <p>margin</p>
+                {imageEl.margins &&
+                  Object.keys(imageEl.margins)
+                    .sort(sortMargins)
+                    .map(marginPos => (
+                      <div className="position__wrapper" key={'m-margin' + marginPos}>
+                        <label>
+                          {marginPos}
+                          <input
+                            type="checkbox"
+                            id={id + marginPos}
+                            name={marginPos}
+                            checked={
+                              imageEl.marginsMobile && imageEl.marginsMobile[marginPos] && 'checked'
+                            }
+                            onChange={e => updateMarginMobile(marginPos, itemIndex, imageIndex, e)}
+                          />
+                        </label>
+                      </div>
+                    ))}
               </div>
-            ))}
-          </div>
+              <div className="position__line">
+                <p>anchor</p>
+                {anchorValues.map(anchor => (
+                  <div className="position__wrapper" key={'m-anchor' + anchor}>
+                    <label>
+                      {anchor}
+                      <input
+                        type="radio"
+                        // Unique name for the mobile group
+                        name={`anchor-mobile-${id}-${imageIndex}`}
+                        id={id + anchor + '-anm-' + imageIndex}
+                        value={anchor}
+                        checked={imageEl.anchorMobile === anchor}
+                        onChange={e => updateAnchorMobile(itemIndex, imageIndex, e)}
+                      />
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <div className="position__line">
+                <p>objectFit</p>
+                {objectFitValues.map(objectFit => (
+                  <div className="position__wrapper" key={'m-objectfit' + objectFit}>
+                    <label>
+                      {objectFit}
+                      <input
+                        type="radio"
+                        name={`objectfit-mobile-${id}-${imageIndex}`}
+                        id={id + objectFit + '-ofm-' + imageIndex}
+                        value={objectFit}
+                        checked={imageEl.objectFitMobile === objectFit ? 'checked' : ''}
+                        onChange={e => updateObjectFitMobile(itemIndex, imageIndex, e)}
+                      />
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Collapsible>
         </div>
       </div>
     </div>
@@ -322,6 +354,6 @@ ItemContent.propTypes = {
   itemIndex: PropTypes.number,
   imageIndex: PropTypes.number,
   onClickLinkExisting: PropTypes.func,
-  deleteImage: PropTypes.func,
+  deleteAsset: PropTypes.func,
   sdk: PropTypes.object
 };

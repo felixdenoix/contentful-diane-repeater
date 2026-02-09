@@ -1,0 +1,21 @@
+.grid-fields {
+  width: 100%;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 16px;
+}
+
+.position {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.position span {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.position .input {
+  width: auto;
+}

@@ -1,14 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
-import '@contentful/forma-36-react-components/dist/styles.css';
-import { Icon } from '@contentful/forma-36-react-components';
-
+import Collapsible from 'react-collapsible';
 import { SortableContainer, SortableElement, SortableHandle } from 'react-sortable-hoc';
 import arrayMove from 'array-move';
-
-import { TextInput, Button, Spinner } from '@contentful/forma-36-react-components';
+import '@contentful/forma-36-react-components/dist/styles.css';
+import { TextInput, Button, Icon } from '@contentful/forma-36-react-components';
 import { init } from 'contentful-ui-extensions-sdk';
+
+import Toolbar from './components/Toolbar';
+import Debug from './components/Debug';
 import ItemContent from './components/ItemContent';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -16,7 +17,6 @@ import scenesSchema from './model';
 import { baseScene, baseSceneItem } from './baseItems';
 
 import './index.css';
-import Collapsible from 'react-collapsible';
 
 const SortableList = SortableContainer(({ children }) => (
   <div className="scene__list">{children}</div>
@@ -24,7 +24,9 @@ const SortableList = SortableContainer(({ children }) => (
 
 const DragHandle = SortableHandle(({ dragDisabled }) => (
   <div className={`scene__handle ${dragDisabled && 'disabled'}`}>
-    <span>::</span>
+    <span>
+      <Icon icon="Drag" color="secondary" size="small" />
+    </span>
   </div>
 ));
 
@@ -35,7 +37,7 @@ const CollapsibleAsset = ({ asset }) => {
     if (asset.contentType && asset.contentType.includes('video')) {
       return (
         <span className="collapsible__asset">
-          <Icon icon="Asset" height="30" width="30" color="primary" className="inline" />
+          <Icon icon="Asset" height="30" width="30" className="inline" />
         </span>
       );
     } else {
@@ -46,14 +48,17 @@ const CollapsibleAsset = ({ asset }) => {
       );
     }
   }
+  return <span className="collapsible__asset" />;
+};
+
+CollapsibleAsset.propTypes = {
+  asset: PropTypes.object
 };
 
 class App extends React.Component {
   static propTypes = {
     sdk: PropTypes.object.isRequired
   };
-
-  // TODO: permettre clic sur label !!
 
   constructor(props) {
     super(props);
@@ -72,8 +77,6 @@ class App extends React.Component {
       scenes: [...fixedValue], // fixedValue is expected to be an array, so spread into an array
       saving: false
     };
-
-    this.scenesRef = React.createRef();
   }
 
   componentDidMount() {
@@ -100,9 +103,14 @@ class App extends React.Component {
   };
 
   onSortEnd = ({ oldIndex, newIndex }) => {
-    this.setState(({ scenes }) => ({
-      scenes: arrayMove(scenes, oldIndex, newIndex)
-    }));
+    this.setState(
+      ({ scenes }) => ({
+        scenes: arrayMove(scenes, oldIndex, newIndex)
+      }),
+      () => {
+        this.setDistantFieldValue();
+      }
+    );
   };
 
   onClickLinkExisting = async (itemIndex, imageIndex) => {
@@ -201,8 +209,9 @@ class App extends React.Component {
 
   setDistantFieldValue = () => {
     this.setState({ saving: true });
-    const stateHasChanged = JSON.stringify(this.state.value) !== JSON.stringify(this.state.scenes); // THIS IS ABSOLUTELY DISGUSTING, I KNOW.
-    console.log('🐯 stateHasChanged', stateHasChanged);
+
+    console.log('setDistantFieldValue', this.state.scenes);
+
     return this.props.sdk.field.setValue(this.state.scenes).then(data => {
       this.setState({ scenes: [...data], value: [...data] });
       console.log('🚀 REMOTE UPDATED');
@@ -210,28 +219,47 @@ class App extends React.Component {
     });
   };
 
-  setDebug = () => {
+  toggleDebug = () => {
     this.setState(({ debug }) => ({ debug: !debug }));
   };
 
   addScene = () => {
-    this.setState(({ scenes }) => ({
-      scenes: [...scenes, baseScene()]
-    }));
+    this.setState(
+      ({ scenes }) => ({
+        scenes: [...scenes, baseScene()]
+      }),
+      () => {
+        this.setDistantFieldValue();
+      }
+    );
   };
 
   deleteScene = index => {
-    this.setState(({ scenes }) => {
-      scenes.splice(index, 1);
-      return { scenes };
-    });
+    this.setState(
+      ({ scenes }) => ({
+        scenes: scenes.filter((_, i) => i !== index)
+      }),
+      () => {
+        this.setDistantFieldValue();
+      }
+    );
   };
 
   removeSceneContent = (sceneIndex, contentIndex) => {
-    this.setState(({ scenes }) => {
-      scenes[sceneIndex].content.splice(contentIndex, 1);
-      return { scenes };
-    });
+    this.setState(
+      ({ scenes }) => ({
+        scenes: scenes.map((scene, sIdx) => {
+          if (sIdx !== sceneIndex) return scene;
+          return {
+            ...scene,
+            content: scene.content.filter((_, cIdx) => cIdx !== contentIndex)
+          };
+        })
+      }),
+      () => {
+        this.setDistantFieldValue();
+      }
+    );
   };
 
   addSceneContent = index => {
@@ -239,12 +267,18 @@ class App extends React.Component {
       ({ scenes }) => {
         const newSceneContent = baseSceneItem();
 
-        scenes[index].content.push(newSceneContent);
-
-        return { scenes };
+        return {
+          scenes: scenes.map((scene, i) => {
+            if (i !== index) return scene;
+            return {
+              ...scene,
+              content: [...scene.content, newSceneContent]
+            };
+          })
+        };
       },
       () => {
-        console.log('🐯 after ADDSCENECONTENT', this.state.scenes[index].content);
+        this.setDistantFieldValue();
       }
     );
   };
@@ -293,7 +327,7 @@ class App extends React.Component {
     );
   };
 
-  udpateDebugInput = e => {
+  updateDebugInput = e => {
     const newVal = e.target.value;
     this.setState({ debugInput: newVal });
   };
@@ -305,16 +339,7 @@ class App extends React.Component {
 
   updateImageElGrid = (pos, axis, itemIndex, imageIndex, e) => {
     const newVal = e.currentTarget.value;
-    this.handleSceneUpdate(itemIndex, ['content', imageIndex, 'grid', pos, axis], newVal, () => {
-      console.log(
-        '🐯 grid updateed STATE',
-        this.state.scenes[itemIndex].content[imageIndex].grid[pos]
-      );
-      console.log(
-        '🐯 grid updateed VALUE',
-        this.state.value[itemIndex].content[imageIndex].grid[pos]
-      );
-    });
+    this.handleSceneUpdate(itemIndex, ['content', imageIndex, 'grid', pos, axis], newVal);
   };
 
   updateImageElMargin = (pos, itemIndex, imageIndex, e) => {
@@ -338,19 +363,20 @@ class App extends React.Component {
       // Specific logic for deleting stampAsset if stampEffect is turned off
       if (!newVal) {
         this.setState(
-          prevState => {
-            const newScenes = [...prevState.scenes];
-            delete newScenes[itemIndex].content[imageIndex].stampAsset;
-
-            // const updatedScene = { ...newScenes[itemIndex] };
-            // const updatedContent = [...updatedScene.content];
-            // const updatedImageEl = { ...updatedContent[imageIndex] };
-            // delete updatedImageEl.stampAsset;
-            // updatedContent[imageIndex] = updatedImageEl;
-            // updatedScene.content = updatedContent;
-            // newScenes[itemIndex] = updatedScene;
-            return { scenes: newScenes };
-          },
+          prevState => ({
+            scenes: prevState.scenes.map((scene, sIdx) => {
+              if (sIdx !== itemIndex) return scene;
+              return {
+                ...scene,
+                content: scene.content.map((item, cIdx) => {
+                  if (cIdx !== imageIndex) return item;
+                  const newItem = { ...item };
+                  delete newItem.stampAsset;
+                  return newItem;
+                })
+              };
+            })
+          }),
           async () => {
             await this.setDistantFieldValue();
           }
@@ -465,63 +491,25 @@ class App extends React.Component {
     }
   };
 
-  copyScenes = () => {
-    this.scenesRef.current.select();
-    document.execCommand('copy');
-  };
-
   render = () => {
     return (
       <div className="base">
-        <div className="control">
-          <Button buttonType="muted" onClick={this.setDebug}>
-            Debug <span role="img">🐱</span>
-          </Button>
-
-          <Button buttonType="muted" onClick={this.toggleSorting}>
-            Sorting is: {this.state.preventSorting ? 'disabled ❌' : 'enabled 👍'}{' '}
-          </Button>
-
-          <Button buttonType="positive" onClick={this.setDistantFieldValue}>
-            <span role="img">💾</span> {this.state.saving && <Spinner />} SAVE{' '}
-            <span role="img">💾</span>
-          </Button>
-        </div>
+        <Toolbar
+          toggleDebug={this.toggleDebug}
+          sortingActive={!this.state.preventSorting}
+          toggleSorting={this.toggleSorting}
+          addScene={this.addScene}
+          save={this.setDistantFieldValue}
+          saving={this.state.saving}
+        />
 
         {this.state.debug && (
-          <div className="debug">
-            <div className="debug__scenes">
-              <Button
-                id="copy"
-                icon="Copy"
-                size="small"
-                buttonType="muted"
-                onClick={this.copyScenes}>
-                copy
-              </Button>
-              <textarea
-                ref={this.scenesRef}
-                value={JSON.stringify(this.state.scenes, null, 2)}
-                readOnly
-              />
-            </div>
-
-            <div className="debug__input">
-              <div className="">update field</div>
-              <div className="">
-                <textarea value={this.state.debugInput} onChange={this.udpateDebugInput} />
-              </div>
-              <div className="">
-                <Button
-                  id="fix"
-                  buttonType="muted"
-                  size="small"
-                  onClick={this.setScenesFromDebugInput}>
-                  set scenes state
-                </Button>
-              </div>
-            </div>
-          </div>
+          <Debug
+            debugValue={this.state.scenes}
+            debugInput={this.state.debugInput}
+            updateDebugInput={this.updateDebugInput}
+            setScenesFromDebugInput={this.setScenesFromDebugInput}
+          />
         )}
 
         <ErrorBoundary>
@@ -546,7 +534,7 @@ class App extends React.Component {
                         <h3 className="inline">titre:</h3>
                         {this.state.preventSorting ? (
                           <TextInput
-                            className="inline"
+                            className="input inline"
                             type="text"
                             value={scene.title}
                             onChange={e => this.updateSceneTitle(index, e)}
@@ -558,43 +546,44 @@ class App extends React.Component {
                       {this.state.preventSorting && (
                         <div>
                           <h3>contenu:</h3>
-                          {scene.content.length > 0 &&
-                            scene.content.map((el, imageIndex) => (
-                              <Collapsible
-                                key={el.id}
-                                trigger={
-                                  <>
-                                    <CollapsibleAsset asset={el.asset} />
-                                    <span>{el.asset.title || el.id}</span>
-                                  </>
-                                }
-                                triggerClassName="collapsible-t"
-                                triggerOpenedClassName="collapsible-t__opened">
-                                <ItemContent
-                                  imageEl={el}
+                          {scene.content.length > 0
+                            ? scene.content.map((el, imageIndex) => (
+                                <Collapsible
                                   key={el.id}
-                                  id={el.id}
-                                  itemIndex={index}
-                                  imageIndex={imageIndex}
-                                  updateGrid={this.updateImageElGrid}
-                                  updateMargin={this.updateImageElMargin}
-                                  updateMarginMobile={this.updateImageElMarginMobile}
-                                  updateFullBleed={this.updateImageElFullBleed}
-                                  updateZIndex={this.updateImageElZIndex}
-                                  updateAnchor={this.updateImageElAnchor}
-                                  updateAutoPlay={this.updateImageElAutoPlay}
-                                  updateAnchorMobile={this.updateImageElMobileAnchor}
-                                  updateObjectFit={this.updateImageElObjectFit}
-                                  updateObjectFitMobile={this.updateImageElObjectFitMobile}
-                                  updateStampEffect={this.updateImageElStampEffect}
-                                  onClickLinkExistingStamp={this.onClickLinkExistingStamp}
-                                  onClickLinkExisting={this.onClickLinkExisting}
-                                  deleteImage={this.removeSceneContent}
-                                  setDistantFieldValue={this.setDistantFieldValue}
-                                  sdk={this.props.sdk}
-                                />
-                              </Collapsible>
-                            ))}
+                                  trigger={
+                                    <>
+                                      <CollapsibleAsset asset={el.asset} />
+                                      <span>{el.asset.title || el.id || 'Asset'}</span>
+                                    </>
+                                  }
+                                  triggerClassName="collapsible-t"
+                                  triggerOpenedClassName="collapsible-t__opened">
+                                  <ItemContent
+                                    imageEl={el}
+                                    key={el.id}
+                                    id={el.id}
+                                    itemIndex={index}
+                                    imageIndex={imageIndex}
+                                    updateGrid={this.updateImageElGrid}
+                                    updateMargin={this.updateImageElMargin}
+                                    updateMarginMobile={this.updateImageElMarginMobile}
+                                    updateFullBleed={this.updateImageElFullBleed}
+                                    updateZIndex={this.updateImageElZIndex}
+                                    updateAnchor={this.updateImageElAnchor}
+                                    updateAutoPlay={this.updateImageElAutoPlay}
+                                    updateAnchorMobile={this.updateImageElMobileAnchor}
+                                    updateObjectFit={this.updateImageElObjectFit}
+                                    updateObjectFitMobile={this.updateImageElObjectFitMobile}
+                                    updateStampEffect={this.updateImageElStampEffect}
+                                    onClickLinkExistingStamp={this.onClickLinkExistingStamp}
+                                    onClickLinkExisting={this.onClickLinkExisting}
+                                    deleteAsset={this.removeSceneContent}
+                                    setDistantFieldValue={this.setDistantFieldValue}
+                                    sdk={this.props.sdk}
+                                  />
+                                </Collapsible>
+                              ))
+                            : null}
                         </div>
                       )}
 
@@ -610,13 +599,15 @@ class App extends React.Component {
                       )}
                     </div>
                     <div className="scene__actions delete">
-                      <Button
-                        buttonType="negative"
-                        className="hide"
-                        icon="Delete"
-                        size="small"
-                        onClick={() => this.deleteScene(index)}
-                      />
+                      {this.state.preventSorting && (
+                        <Button
+                          buttonType="negative"
+                          className="hide"
+                          icon="Delete"
+                          size="small"
+                          onClick={() => this.deleteScene(index)}
+                        />
+                      )}
                     </div>
                   </div>
                 </SortableItem>
@@ -624,25 +615,7 @@ class App extends React.Component {
           </SortableList>
         </ErrorBoundary>
 
-        {this.state.scenes.length > 0 && (
-          <div className="control">
-            <Button buttonType="muted" onClick={this.setDebug}>
-              Debug <span role="img">🐱</span>
-            </Button>
-
-            <Button buttonType="muted" onClick={this.addScene}>
-              Add scene <span role="img">📸</span>
-            </Button>
-
-            <Button buttonType="muted" onClick={this.toggleSorting}>
-              Sorting is: {this.state.preventSorting ? 'disabled ❌' : 'enabled 👍'}{' '}
-            </Button>
-
-            <Button buttonType="positive" onClick={this.setDistantFieldValue}>
-              <span role="img">💾</span> SAVE <span role="img">💾</span>
-            </Button>
-          </div>
-        )}
+        {this.state.scenes.length > 0 && this.toolbar}
       </div>
     );
   };
@@ -656,6 +629,6 @@ init(sdk => {
  * By default, iframe of the extension is fully reloaded on every save of a source file.
  * If you want to use HMR (hot module reload) instead of full reload, uncomment the following lines
  */
-// if (module.hot) {
-//   module.hot.accept();
-// }
+if (module.hot) {
+  module.hot.accept();
+}
